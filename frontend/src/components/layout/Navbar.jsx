@@ -15,13 +15,13 @@ export default function Navbar({ user }) {
         Welcome Back, <span className="font-semibold">{user?.firstName || "there"}!</span>
       </h1>
 
-      <div className="flex items-center gap-5">
-        <button className="relative text-slate-600" aria-label="Notifications">
-          <Bell size={20} strokeWidth={1.75} />
+      <div className="flex items-center gap-10">
+        <button className="relative text-slate-600 cursor-pointer" aria-label="Notifications">
+          <Bell size={25} strokeWidth={1.75} />
           <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#172554]" />
         </button>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 cursor-pointer">
           <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold bg-[#172554]">
             {initials}
           </div>
