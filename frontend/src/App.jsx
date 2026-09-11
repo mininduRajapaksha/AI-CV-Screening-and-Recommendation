@@ -7,22 +7,21 @@ import Candidates from "./pages/Candidates"
 import Reports from "./pages/Reports"
 import Profile from "./pages/Profile"
 
-
+// Authentication Pages
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import ForgotPassword from "./pages/ForgotPassword"
 
 function App() {
-
   return (
     <Router>
       <Routes>
-
+        {/* Authentication Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
-
+        {/* Main pages */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="jobs" element={<JobsPostings />} />
