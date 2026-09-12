@@ -7,9 +7,10 @@ import Candidates from "./pages/Candidates"
 import Reports from "./pages/Reports"
 import Profile from "./pages/Profile"
 
-
 import AdminLayout from "./layouts/AdminLayout"
 import UserManagement from "./pages/Admin/UserManagement"
+import SystemStatus from "./pages/Admin/SystemStatus" 
+import ApiConfiguration from "./pages/Admin/ApiConfiguration"
 
 function App() {
 
@@ -31,7 +32,8 @@ function App() {
         {/*Admin Pages*/}
         <Route path="/admin" element={<AdminLayout/>}>
           <Route index element={<UserManagement />} />
-          {/* <Route path="/users" element={<UserManagement/>}/> */}
+          <Route path="system-status" element={<SystemStatus />} /> 
+          <Route path="api-configuration" element={<ApiConfiguration />} />
         </Route>
       </Routes>
     </Router>
