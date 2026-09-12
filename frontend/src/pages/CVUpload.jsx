@@ -1,7 +1,12 @@
 import { useRef, useState } from "react";
 import {
   ChevronDown,
-  UploadCloud
+  UploadCloud,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  LoaderCircle,
+  X
 } from "lucide-react"
 
 const MAX_FILE_SIZE = 5* 1024 * 1024;
@@ -69,7 +74,7 @@ export default function CVUpload() {
     setFiles((prevFiles) => [...prevFiles, ...newFiles]);
 
     // Simulate upload for valid files
-    newFiles.forEach((newFiles) =>{
+    newFiles.forEach((newFile) =>{
       if(!newFile.error){
         simulateUpload(newFile.id);
       }
@@ -164,7 +169,45 @@ export default function CVUpload() {
     readyCount === files.length &&
     !isScreening;
   
-  
+  //Start Screening
+  const startScreening = () => {
+    if (!canStartScreening) return;
+
+    setIsScreening(true);
+    setScreeningProgress(0);
+    setScreeningComplete(false);
+
+    let progress = 0;
+
+    const interval = setInterval(() => {
+      progress += Math.floor(Math.random() * 10) + 5;
+
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+
+        setScreeningProgress(100);
+
+        setTimeout(() => {
+          setIsScreening(false);
+          setScreeningComplete(true);
+        }, 500);
+
+        return;
+      }
+
+      setScreeningProgress(progress);
+    }, 500);
+  };
+
+  //Format file size
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   return (
     <div className="w-full pb-10">
@@ -245,6 +288,150 @@ export default function CVUpload() {
           onChange={handleFileSelect}
         />
       </div>
+
+      {/*File List*/}
+      {files.length > 0 && (
+        <div className="mx-auto w-[calc(100%-140px)] overflow-hidden rounded-[14px] border border-slate-200 bg-white">
+          {/*file list header*/}
+          <div className="flex h-[53px] items-center justify-between border-b border-slate-200 px-7 text-[13px] font-medium text-slate-900">
+            <span>
+              {files.length}{""}
+              {files.length === 1 ? "file" : "files"} selected
+            </span>
+
+            <span>
+              {readyCount} of {files.length} ready
+            </span>
+          </div>
+
+          {/*files*/}
+          <div className="px-[15px]">
+
+            {files.map((item) => (
+              <div
+                key={item.id}
+                className="flex min-h-[86px] items-center gap-4 border-b border-slate-200 px-3 py-3"
+              >
+                {/*File icon*/}
+
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-slate-900">
+                  <FileText size={24}/>
+                </div>
+
+                {/*File information*/}
+
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1.5 truncate text-[13px] font-medium text-slate-900">
+                    {item.name}
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          item.status === "failed"
+                            ? "bg-red-600"
+                            : "bg-blue-500"
+                        }`}
+                        style={{
+                          width: `${item.progress}%`,
+                        }}
+                      />
+                    </div>
+
+                    <span className="w-9 text-right text-xs text-slate-500">
+                      {item.progress}%
+                    </span>
+                  </div>
+
+                  <div className="mt-1 text-xs text-slate-500">
+                    {formatFileSize(item.size)}
+                  </div>
+
+                  {/*error*/}
+                  {item.status === "failed" && (
+                    <div className="mt-1 flex items-center gap-1 text-[11px] text-red-600">
+                      <AlertCircle size={14}/>
+                      {item.error}
+                    </div>
+                  )}
+                </div>
+
+                {/*Status*/}
+
+                <div
+                  className={`flex w-[105px] shrink-0 items-center gap-1 text-xs font-medium ${
+                    item.status === "completed"
+                      ? "text-green-600"
+                      : item.status === "failed"
+                        ? "text-red-600"
+                        : "text-slate-500"
+                  }`}
+                >
+                  {item.status === "completed" && (
+                    <>
+                      <CheckCircle size={16}/>
+                      Completed
+                    </>
+                  )}
+
+                  {item.status === "uploading" && (
+                    <>
+                      <LoaderCircle size={16} className="animate-spin"/>
+                      Uploading...
+                    </>
+                  )}
+
+                  {item.status === "failed" && (
+                    <>
+                      <AlertCircle size={16} />
+                      Failed
+                    </>
+                  )}
+                </div>
+
+                {/*remove file*/}
+                <button
+                  type="button"
+                  onClick={() => removeFile(item.id)}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                  aria-label={`Remove ${item.name}`}
+                >
+                  <X size={22} />
+                </button>
+
+              </div>
+            ))}
+          </div>
+
+          {/*footer*/}
+
+          <div className="flex min-h-[67px] items-center justify-between px-7 py-3">
+            <button
+              type="button"
+              onClick={clearAllFiles}
+              className="py-2 text-[13px] text-slate-500 transition hover:text-slate-900"
+            >
+              Clear All Files
+            </button>
+
+            <button
+              type="button"
+              disabled={!canStartScreening}
+              onClick={startScreening}
+              className={`h-[38px] rounded-lg px-[18px] text-[13px] font-medium transition ${
+                canStartScreening
+                  ? "bg-[#19295F] text-white hover:bg-blue-900"
+                  : "cursor-not-allowed bg-slate-300 text-slate-500"
+              }`}
+            >
+              Start Screening
+            </button>
+          </div>
+        </div>
+      )
+      }
     </div>
   );
 }
