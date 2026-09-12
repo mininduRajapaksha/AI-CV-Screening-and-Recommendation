@@ -7,6 +7,10 @@ import Candidates from "./pages/Candidates"
 import Reports from "./pages/Reports"
 import Profile from "./pages/Profile"
 
+
+import AdminLayout from "./layouts/AdminLayout"
+import UserManagement from "./pages/Admin/UserManagement"
+
 function App() {
 
   return (
@@ -22,6 +26,12 @@ function App() {
           <Route path="candidates" element={<Candidates />} />
           <Route path="reports" element={<Reports />} />
           <Route path="profile" element={<Profile />} />
+        </Route>
+
+        {/*Admin Pages*/}
+        <Route path="/admin" element={<AdminLayout/>}>
+          <Route index element={<UserManagement />} />
+          {/* <Route path="/users" element={<UserManagement/>}/> */}
         </Route>
       </Routes>
     </Router>
