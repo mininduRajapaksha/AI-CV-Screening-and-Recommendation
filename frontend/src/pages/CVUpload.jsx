@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ChevronDown,
   UploadCloud,
@@ -6,7 +7,8 @@ import {
   AlertCircle,
   CheckCircle,
   LoaderCircle,
-  X
+  X,
+  CheckCircle2
 } from "lucide-react"
 
 const MAX_FILE_SIZE = 5* 1024 * 1024;
@@ -21,6 +23,8 @@ const jobs = [
 ]
 
 export default function CVUpload() {
+
+  const navigate = useNavigate();
 
   const fileInputRef = useRef(null);
   
@@ -487,15 +491,26 @@ export default function CVUpload() {
         </div>
       )}
 
-      {/*Screening progress*/}
+      {/*Screening complete overlay*/}
 
       {screeningComplete && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-[3px]">
 
-          <div className="w-[420px] rounded-2xl bg-white p-8 text-center shadow-2xl">
+          <div className="relative w-[420px] rounded-2xl bg-white p-8 text-center shadow-2xl">
+
+            {/*Close button*/}
+
+            <button
+              type="button"
+              onClick={() => setScreeningComplete(false)}
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Close"
+            >
+              <X size={20}/>
+            </button>
 
             <div className="mx-auto mb-[18px] flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-600">
-              <CheckCircle size={42}/>
+              <CheckCircle2 size={42}/>
             </div>
 
             <h2 className="text-xl font-semibold leading-7 text-slate-900">
@@ -510,7 +525,7 @@ export default function CVUpload() {
 
             <button
               type="button"
-              onClick={() => setScreeningComplete(false)}
+              onClick={() => navigate("/reports")}
               className="mt-5 h-10 rounded-lg bg-[#19295F] px-6 text-[13px] font-medium text-white transition hover:bg-blue-900"
             >
               View Results
