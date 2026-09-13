@@ -432,6 +432,92 @@ export default function CVUpload() {
         </div>
       )
       }
+
+      {/*Screening overlay*/}
+
+      {isScreening && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-[3px]">
+          <div className="w-[420px] rounded-2xl bg-white p-8 text-center shadow-2xl">
+
+            {/*Spinning*/}
+
+            <div className="mx-auto mb-[18px] flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+
+              <LoaderCircle size={32} className="animate-spin"/>
+            </div>
+
+            <h2 className="text-xl font-semibold leading-7 text-slate-900">
+              Screening CVs
+            </h2>
+
+            <p className="mx-auto mt-2 max-w-[340px] text-sm leading-5 text-slate-500">
+              Extracting Details...
+            </p>
+
+            <div className="mb-3 mt-5 text-[15px] font-medium leading-[22px] text-slate-700">
+              {files.length}{""}
+              {files.length === 1 ? " file" : " files"} processing
+            </div>
+
+            {/*Progress bar*/}
+
+            <div className="h-2 w-full overflow-hidden rounded-lg bg-slate-200">
+
+              <div
+                className="h-full rounded-lg bg-blue-600 transition-all duration-300"
+                style={{
+                  width: `${screeningProgress}%`,
+                }}
+              />
+
+            </div>
+
+            <div className="mt-2 flex justify-between text-xs font-medium text-slate-500">
+              <span>Processing...</span>
+
+              <span>
+                {screeningProgress}%
+              </span>
+            </div>
+
+            <p className="mt-6 text-xs text-slate-400">
+              Please wait while the screening is completed.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/*Screening progress*/}
+
+      {screeningComplete && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-[3px]">
+
+          <div className="w-[420px] rounded-2xl bg-white p-8 text-center shadow-2xl">
+
+            <div className="mx-auto mb-[18px] flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-600">
+              <CheckCircle size={42}/>
+            </div>
+
+            <h2 className="text-xl font-semibold leading-7 text-slate-900">
+               Screening Complete
+            </h2>
+
+            <p className="mx-auto mt-2 max-w-[340px] text-sm leading-5 text-slate-500">
+              {files.length}{""}
+              {files.length === 1 ? " CV has" : " CVs have "}{""}
+              been successfully screened
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setScreeningComplete(false)}
+              className="mt-5 h-10 rounded-lg bg-[#19295F] px-6 text-[13px] font-medium text-white transition hover:bg-blue-900"
+            >
+              View Results
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
