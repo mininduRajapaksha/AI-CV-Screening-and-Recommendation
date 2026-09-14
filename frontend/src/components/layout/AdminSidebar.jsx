@@ -36,7 +36,12 @@ export default function AdminSidebar({ onLogout }) {
         {/* Nav links */}
         <nav className="px-4 space-y-1.5 mt-2">
           {navLinks.map(({ label, icon: Icon, to }) => (
-            <NavLink key={label} to={to} className={linkClasses}>
+            <NavLink 
+              key={label} 
+              to={to} 
+              end={to === "/admin"} 
+              className={linkClasses}
+            >
               <Icon size={19} strokeWidth={1.75} />
               {label}
             </NavLink>
