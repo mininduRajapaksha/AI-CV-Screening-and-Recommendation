@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+﻿import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import MainLayout from "./layouts/MainLayout"
 import Dashboard from "./pages/Dashboard"
 import JobsPostings from "./pages/JobsPostings"
@@ -11,6 +11,7 @@ import AdminLayout from "./layouts/AdminLayout"
 import UserManagement from "./pages/Admin/UserManagement"
 import SystemStatus from "./pages/Admin/SystemStatus" 
 import ApiConfiguration from "./pages/Admin/ApiConfiguration"
+import DatabaseStatus from "./pages/Admin/DatabaseStatus"
 
 function App() {
 
@@ -34,6 +35,8 @@ function App() {
           <Route index element={<UserManagement />} />
           <Route path="system-status" element={<SystemStatus />} /> 
           <Route path="api-configuration" element={<ApiConfiguration />} />
+          <Route path="database-status" element={<DatabaseStatus/>}/>
+          <Route path="profile" element={<Profile accountType="admin" />} />
         </Route>
       </Routes>
     </Router>
