@@ -1,7 +1,7 @@
-﻿import { Bell } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
-export default function Topbar({ title = 'Welcome Back, Minindu!' }) {
+export default function Navbar({ title = 'Welcome Back, Minindu!' }) {
   const { user } = useAuth()
   return (
     <header className="h-[72px] flex items-center justify-between px-8 border-b border-slate-200 bg-white sticky top-0 z-10">

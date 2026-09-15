@@ -1,6 +1,6 @@
 ﻿import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ChevronLeft, Trash2, Lock, Pencil } from 'lucide-react'
-import Layout from '../../components/layout/Layout'
+import MainLayout from '../../layouts/MainLayout'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import { useJobs } from '../../context/JobContext'
@@ -11,7 +11,7 @@ export default function JobDetails() {
   const { getJob, deleteJob } = useJobs()
   const job = getJob(id)
 
-  if (!job) return <Layout><p>Job not found</p></Layout>
+  if (!job) return <MainLayout><p>Job not found</p></MainLayout>
 
   const handleDelete = () => {
     if (window.confirm('Delete this job posting?')) {
@@ -21,7 +21,7 @@ export default function JobDetails() {
   }
 
   return (
-    <Layout topbarTitle="Welcome Back, Minindu!">
+    <MainLayout topbarTitle="Welcome Back, Minindu!">
       <Link to="/jobs" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-navy mb-4">
         <ChevronLeft className="w-4 h-4" /> Back to Jobs
       </Link>
@@ -76,6 +76,6 @@ export default function JobDetails() {
           </div>
         </div>
       </div>
-    </Layout>
+    </MainLayout>
   )
 }

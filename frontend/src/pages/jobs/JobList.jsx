@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Briefcase, Check, FileEdit, Lock, Plus, Search, Trash2, Eye, Pencil } from 'lucide-react'
-import Layout from '../../components/layout/Layout'
+import MainLayout from '../../layouts/MainLayout'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import { useJobs } from '../../context/JobContext'
@@ -35,7 +35,7 @@ export default function JobList() {
   const statusVariant = { Active: 'success', Draft: 'warning', Closed: 'danger' }
 
   return (
-    <Layout topbarTitle="Welcome Back, Minindu!">
+    <MainLayout topbarTitle="Welcome Back, Minindu!">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-navy">Job Postings</h2>
@@ -95,6 +95,6 @@ export default function JobList() {
           </tbody>
         </table>
       </div>
-    </Layout>
+    </MainLayout>
   )
 }
