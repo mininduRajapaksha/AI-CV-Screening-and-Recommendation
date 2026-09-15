@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; // Required for navigation
 import { Briefcase, Users, Star } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -44,6 +45,8 @@ const skillData = [
 ];
 
 export default function Dashboard() {
+  const navigate = useNavigate(); // Hook initialized for route navigation
+
   return (
     <div className="p-6 bg-slate-50 min-h-screen text-slate-800">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
@@ -166,7 +169,8 @@ export default function Dashboard() {
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex justify-between items-center">
           <h3 className="text-sm font-bold">Recent Candidates</h3>
-          <button className="text-xs font-bold text-slate-700 hover:underline">View all</button>
+          {/* Navigate to candidates list view */}
+          <button onClick={() => navigate('/candidates')} className="text-xs font-bold text-slate-700 hover:underline cursor-pointer">View all</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -193,7 +197,8 @@ export default function Dashboard() {
                   <span className="inline-block w-36 py-1.5 bg-green-400 text-white rounded-md text-xs font-medium">Highly Recommended</span>
                 </td>
                 <td className="p-4 text-center">
-                  <button className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md text-xs font-medium transition-colors">View Profile</button>
+                  {/* Navigate to Harshani's specific profile */}
+                  <button onClick={() => navigate('/candidates', { state: { candidateName: 'Harshani' } })} className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md text-xs font-medium transition-colors cursor-pointer">View Profile</button>
                 </td>
               </tr>
               <tr className="border-b border-slate-100 hover:bg-slate-50">
@@ -209,7 +214,8 @@ export default function Dashboard() {
                   <span className="inline-block w-36 py-1.5 bg-yellow-400 text-white rounded-md text-xs font-medium">Recommended</span>
                 </td>
                 <td className="p-4 text-center">
-                  <button className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md text-xs font-medium transition-colors">View Profile</button>
+                  {/* Navigate to Diluni's specific profile */}
+                  <button onClick={() => navigate('/candidates', { state: { candidateName: 'Diluni' } })} className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md text-xs font-medium transition-colors cursor-pointer">View Profile</button>
                 </td>
               </tr>
               <tr className="hover:bg-slate-50">
@@ -225,7 +231,8 @@ export default function Dashboard() {
                   <span className="inline-block w-36 py-1.5 bg-red-500 text-white rounded-md text-xs font-medium">Not Recommended</span>
                 </td>
                 <td className="p-4 text-center">
-                  <button className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md text-xs font-medium transition-colors">View Profile</button>
+                  {/* Navigate to Rovindu's specific profile */}
+                  <button onClick={() => navigate('/candidates', { state: { candidateName: 'Rovindu' } })} className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md text-xs font-medium transition-colors cursor-pointer">View Profile</button>
                 </td>
               </tr>
             </tbody>
