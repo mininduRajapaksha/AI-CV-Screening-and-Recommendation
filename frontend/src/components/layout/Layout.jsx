@@ -3,11 +3,11 @@ import Topbar from './Topbar'
 
 export default function Layout({ children, topbarTitle }) {
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="flex min-h-screen" style={{ backgroundColor: '#EFF6FF' }}>
       <Sidebar />
-      <div className="ml-60">
+      <div className="flex-1 flex flex-col">
         <Topbar title={topbarTitle} />
-        <main className="p-6">{children}</main>
+        <main className="flex-1 p-8">{children}</main>
       </div>
     </div>
   )

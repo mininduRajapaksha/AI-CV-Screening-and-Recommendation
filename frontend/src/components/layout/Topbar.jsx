@@ -4,17 +4,20 @@ import { useAuth } from '../../context/AuthContext'
 export default function Topbar({ title = 'Welcome Back, Minindu!' }) {
   const { user } = useAuth()
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-30">
-      <h1 className="font-semibold text-navy">{title}</h1>
-      <div className="flex items-center gap-4">
-        <button className="p-2 hover:bg-gray-100 rounded-full"><Bell className="w-5 h-5 text-navy" /></button>
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-navy text-white flex items-center justify-center text-sm font-semibold">
+    <header className="h-[72px] flex items-center justify-between px-8 border-b border-slate-200 bg-white sticky top-0 z-10">
+      <h1 className="text-lg text-slate-800">{title}</h1>
+      <div className="flex items-center gap-10">
+        <button className="relative text-slate-600 cursor-pointer" aria-label="Notifications">
+          <Bell size={25} strokeWidth={1.75} />
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#172554]" />
+        </button>
+        <div className="flex items-center gap-2.5 cursor-pointer">
+          <div className="w-9 h-9 rounded-full bg-[#172554] text-white flex items-center justify-center text-xs font-semibold">
             {user?.initials || 'MR'}
           </div>
-          <div className="text-xs leading-tight">
-            <div className="font-semibold text-navy">{user?.name || 'Minindu R.'}</div>
-            <div className="text-gray-500">{user?.role || 'HR Manager'}</div>
+          <div className="leading-tight">
+            <p className="text-sm font-semibold text-slate-800">{user?.name || 'Minindu R.'}</p>
+            <p className="text-xs text-slate-500">{user?.role || 'HR Manager'}</p>
           </div>
         </div>
       </div>
