@@ -36,6 +36,7 @@ function App() {
           <Route path="system-status" element={<SystemStatus />} /> 
           <Route path="api-configuration" element={<ApiConfiguration />} />
           <Route path="database-status" element={<DatabaseStatus/>}/>
+          <Route path="profile" element={<Profile accountType="admin" />} />
         </Route>
       </Routes>
     </Router>
