@@ -3,6 +3,10 @@ import { AuthProvider } from './context/AuthContext'
 import { JobProvider } from './context/JobContext'
 
 import MainLayout from './layouts/MainLayout'
+import Dashboard from './pages/Dashboard'
+import CVUpload from './pages/CVUpload'
+import Candidates from './pages/Candidates'
+import Profile from './pages/Profile'
 
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
@@ -14,6 +18,12 @@ import JobDetails from './pages/jobs/JobDetails'
 import EditJob from './pages/jobs/EditJob'
 import SelectJob from './pages/reports/SelectJob'
 import CandidateRanking from './pages/reports/CandidateRanking'
+
+import AdminLayout from './layouts/AdminLayout'
+import UserManagement from './pages/Admin/UserManagement'
+import SystemStatus from './pages/Admin/SystemStatus'
+import ApiConfiguration from './pages/Admin/ApiConfiguration'
+import DatabaseStatus from './pages/Admin/DatabaseStatus'
 
 export default function App() {
   return (
@@ -33,8 +43,20 @@ export default function App() {
               <Route path="jobs/create" element={<CreateJob />} />
               <Route path="jobs/:id" element={<JobDetails />} />
               <Route path="jobs/:id/edit" element={<EditJob />} />
+              <Route path="cv-upload" element={<CVUpload />} />
+              <Route path="candidates" element={<Candidates />} />
               <Route path="reports" element={<SelectJob />} />
               <Route path="reports/:id" element={<CandidateRanking />} />
+              <Route path="profile" element={<Profile />} />
+            </Route>
+
+            {/* Admin Pages */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<UserManagement />} />
+              <Route path="system-status" element={<SystemStatus />} />
+              <Route path="api-configuration" element={<ApiConfiguration />} />
+              <Route path="database-status" element={<DatabaseStatus />} />
+              <Route path="profile" element={<Profile accountType="admin" />} />
             </Route>
           </Routes>
         </Router>
