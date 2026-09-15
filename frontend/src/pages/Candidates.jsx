@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Search, ChevronDown, Download, ArrowLeft, CheckCircle, AlertCircle, Briefcase, GraduationCap } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { Search, ChevronDown, Download, ArrowLeft, CheckCircle, AlertCircle, Briefcase, GraduationCap, Mail, Phone } from 'lucide-react'; 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -65,7 +66,7 @@ const candidatesData = [
       { title: "Junior Frontend Developer", duration: "1 Year", company: "TechBridge Pvt Ltd" }
     ],
     education: [
-      { degree: "BSc Computer Science", institution: "University of Colombo · 2025" }
+      { degree: "BSc Computer Science", institution: "University of Colombo - 2025" }
     ]
   },
   { 
@@ -87,7 +88,7 @@ const candidatesData = [
       { title: "Senior UI/UX Designer", duration: "3 Years", company: "DesignHub" }
     ],
     education: [
-      { degree: "BA in Interactive Design", institution: "University of Moratuwa · 2023" }
+      { degree: "BA in Interactive Design", institution: "University of Moratuwa - 2023" }
     ]
   },
   { 
@@ -109,7 +110,7 @@ const candidatesData = [
       { title: "Data Analyst", duration: "2 Years", company: "DataMetrics" }
     ],
     education: [
-      { degree: "BSc Statistics", institution: "University of Kelaniya · 2024" }
+      { degree: "BSc Statistics", institution: "University of Kelaniya - 2024" }
     ]
   },
   { 
@@ -131,7 +132,7 @@ const candidatesData = [
       { title: "Junior DevOps Engineer", duration: "1.5 Years", company: "CloudOps Lanka" }
     ],
     education: [
-      { degree: "BSc IT", SLIIT: "SLIIT · 2024" }
+      { degree: "BSc IT", SLIIT: "SLIIT - 2024" }
     ]
   },
   { 
@@ -153,7 +154,7 @@ const candidatesData = [
       { title: "Web Intern", duration: "6 Months", company: "Local Web Agency" }
     ],
     education: [
-      { degree: "Diploma in IT", institution: "NIBM · 2025" }
+      { degree: "Diploma in IT", institution: "NIBM - 2025" }
     ]
   },
   { 
@@ -175,16 +176,23 @@ const candidatesData = [
       { title: "Backend Developer", duration: "1 Year", company: "SoftSolutions" }
     ],
     education: [
-      { degree: "BSc Computer Systems", institution: "APIIT · 2024" }
+      { degree: "BSc Computer Systems", institution: "APIIT - 2024" }
     ]
   }
 ];
 
 export default function Candidates() {
+  const location = useLocation(); 
+  
+  const initialCandidateName = location.state?.candidateName;
+  const initialCandidate = initialCandidateName 
+    ? candidatesData.find(c => c.name === initialCandidateName) 
+    : null;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRec, setFilterRec] = useState("All Recommended");
   const [filterJob, setFilterJob] = useState("All Jobs");
-  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [selectedCandidate, setSelectedCandidate] = useState(initialCandidate); 
 
   const uniqueJobs = ["All Jobs", ...new Set(candidatesData.map(c => c.role))];
   const recOptions = ["All Recommended", "Highly Recommended", "Recommended", "Not Recommended"];
@@ -253,22 +261,35 @@ export default function Candidates() {
           Back to Candidates
         </button>
 
-        {/* Candidate Header Card */}
+        {/* Candidate Header Card - Updated to match Image 1 */}
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-full ${selectedCandidate.initialBg || 'bg-slate-700'} text-white flex items-center justify-center font-bold text-xl`}>
+          
+          <div className="flex items-start gap-5">
+            <div className={`w-14 h-14 rounded-full ${selectedCandidate.initialBg || 'bg-slate-700'} text-white flex items-center justify-center font-bold text-xl mt-1`}>
               {selectedCandidate.initial || selectedCandidate.name[0]}
             </div>
-            <div>
+            
+            <div className="flex flex-col gap-2">
               <h2 className="text-xl font-bold text-slate-800">{selectedCandidate.name}</h2>
-              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-1">
-                <span>Applied For: <strong className="text-slate-700">{selectedCandidate.role}</strong></span>
-                <span>{selectedCandidate.email}</span>
-                <span>{selectedCandidate.phone || "+94 77 900 1234"}</span>
+              
+              <div className="flex flex-col gap-2 text-xs text-slate-600 mt-1">
+                <div className="flex items-center gap-2">
+                  <Briefcase size={14} className="text-slate-500" />
+                  <span>Applied For: <span className="font-medium">{selectedCandidate.role}</span></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail size={14} className="text-slate-500" />
+                  <span>{selectedCandidate.email}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone size={14} className="text-slate-500" />
+                  <span>{selectedCandidate.phone || "+94 77 900 1234"}</span>
+                </div>
               </div>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-indigo-900 hover:bg-indigo-800 text-white rounded-lg text-sm font-medium transition-colors shadow-sm cursor-pointer">
+
+          <button className="flex items-center gap-2 px-5 py-2.5 bg-indigo-900 hover:bg-indigo-800 text-white rounded-lg text-sm font-medium transition-colors shadow-sm cursor-pointer mt-4 md:mt-0">
             <Download size={16} />
             Download CV
           </button>
@@ -346,7 +367,7 @@ export default function Candidates() {
                     <div className="p-1.5 bg-slate-100 rounded-md text-indigo-900 mt-0.5"><Briefcase size={14} /></div>
                     <div>
                       <h4 className="font-bold text-slate-800">{exp.title}</h4>
-                      <p className="text-slate-500">{exp.duration} · {exp.company}</p>
+                      <p className="text-slate-500">{exp.duration} - {exp.company}</p>
                     </div>
                   </div>
                 ))}
