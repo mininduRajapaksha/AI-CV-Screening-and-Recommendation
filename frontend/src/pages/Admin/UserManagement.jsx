@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { use, useMemo, useState } from "react";
 import {
   Users,
   UserCheck,
@@ -91,6 +91,10 @@ function UserManagement() {
   const [statusFilter, setStatusFilter] = useState("All");
 
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({
+    top: 0,
+    left: 0,
+  });
 
   const [roleModal, setRoleModal] = useState(null);
   const [selectedRole, setSelectedRole] = useState("");
@@ -431,12 +435,21 @@ function UserManagement() {
 
                       <button
                         type="button"
-                        onClick={() =>
-                          setOpenMenuId(
-                            openMenuId === user.id
-                              ? null
-                              : user.id
-                          )
+                        onClick={(event) =>{
+                          if(openMenuId === user.id){
+                            setOpenMenuId(null);
+                            return;
+                          }
+
+                          const rect = event.currentTarget.getBoundingClientRect();
+
+                          setMenuPosition({
+                            top: rect.bottom + 6,
+                            left: rect.right - 180,
+                          });
+
+                          setOpenMenuId(user.id);
+                        }
                         }
                         className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                       >
@@ -446,8 +459,13 @@ function UserManagement() {
                       {/* ACTION MENU */}
 
                       {openMenuId === user.id && (
-                        <div className="absolute right-5 top-[52px] z-30 w-[180px] rounded-lg border border-slate-200 bg-white p-1.5 shadow-[0_4px_12px_rgba(15,23,42,0.10)]">
-
+                        <div
+                          className="fixed z-[9999] w-[180px] rounded-lg border border-slate-200 bg-white p-1.5 shadow-[0_4px_12px_rgba(15,23,42,0.10)]"
+                          style={{
+                            top: `${menuPosition.top}px`,
+                            left: `${menuPosition.left}px`,
+                          }}
+                        >
                           {/* CHANGE ROLE */}
 
                           <button
