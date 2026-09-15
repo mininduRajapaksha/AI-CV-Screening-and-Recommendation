@@ -8,16 +8,12 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import ForgotPassword from './pages/auth/ForgotPassword'
 
-import Dashboard from './pages/Dashboard'
 import JobList from './pages/jobs/JobList'
 import CreateJob from './pages/jobs/CreateJob'
 import JobDetails from './pages/jobs/JobDetails'
 import EditJob from './pages/jobs/EditJob'
-import CVUpload from './pages/CVUpload'
-import Candidates from './pages/Candidates'
 import SelectJob from './pages/reports/SelectJob'
 import CandidateRanking from './pages/reports/CandidateRanking'
-import Profile from './pages/Profile'
 
 export default function App() {
   return (
@@ -37,11 +33,8 @@ export default function App() {
               <Route path="jobs/create" element={<CreateJob />} />
               <Route path="jobs/:id" element={<JobDetails />} />
               <Route path="jobs/:id/edit" element={<EditJob />} />
-              <Route path="cv-upload" element={<CVUpload />} />
-              <Route path="candidates" element={<Candidates />} />
               <Route path="reports" element={<SelectJob />} />
               <Route path="reports/:id" element={<CandidateRanking />} />
-              <Route path="profile" element={<Profile />} />
             </Route>
           </Routes>
         </Router>
