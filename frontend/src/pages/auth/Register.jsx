@@ -4,7 +4,7 @@ import AuthLayout from '../../components/auth/AuthLayout'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import { useAuth } from '../../context/AuthContext'
-import logo from '../../assets/logo.png'
+import logo from '../../assets/Logo.png'
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', role: 'HR Manager', agree: false })
@@ -21,13 +21,13 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
-        <div className="flex justify-center mb-4">
-          <img src={logo} alt="CVision AI" className="w-14 h-14 object-contain" />
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-[34rem] p-8 sm:p-12">
+        <div className="flex justify-center mb-5">
+          <img src={logo} alt="CVision AI" className="w-20 h-20 object-contain" />
         </div>
 
-        <h1 className="text-2xl font-bold text-navy text-center">Create Account</h1>
-        <p className="text-xs text-gray-500 text-center mt-1 mb-6">Join TalentFlow to start managing active candidates</p>
+        <h1 className="text-3xl font-bold text-navy text-center">Create Account</h1>
+        <p className="text-sm text-slate-500 text-center mt-2 mb-8">Join TalentFlow to start managing active candidates</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Full Name" required placeholder="e.g. Minindu Ratnayake" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />

@@ -1,5 +1,5 @@
 ﻿import { Zap, Target, ShieldCheck } from 'lucide-react'
-import logo from '../../assets/logo.png'
+import logo from '../../assets/Logo.png'
 
 const features = [
   { icon: Zap, title: 'Automated Screening', desc: 'Save thousands of hours with immediate, high-accuracy AI summary analysis.' },
@@ -10,11 +10,9 @@ const features = [
 export default function AuthLayout({ children }) {
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex w-[45%] bg-gradient-to-b from-authblue to-authblue-dark p-12 flex-col justify-center text-white">
-        <div className="max-w-md">
-          <div className="w-44 h-44 mb-8 rounded-3xl bg-white/10 backdrop-blur flex items-center justify-center border border-white/20 p-5">
-            <img src={logo} alt="CVision AI" className="w-36 h-36 object-contain" />
-          </div>
+      <aside className="hidden lg:flex w-[49%] min-h-screen bg-gradient-to-b from-authblue to-authblue-dark px-20 py-12 flex-col justify-center text-white">
+        <div className="max-w-lg">
+          <img src={logo} alt="CVision AI" className="w-64 h-64 object-contain mb-8" />
 
           <h1 className="text-4xl font-extrabold leading-tight mb-3">
             AI-Powered<br />CV Screening and<br />Recommendation<br />System
@@ -38,11 +36,11 @@ export default function AuthLayout({ children }) {
             ))}
           </div>
         </div>
-      </div>
+      </aside>
 
-      <div className="flex-1 bg-[#f0f2f5] flex items-center justify-center p-6">
+      <main className="flex-1 min-h-screen bg-[#eef3f8] flex items-center justify-center p-6 lg:p-12">
         {children}
-      </div>
+      </main>
     </div>
   )
 }

@@ -4,7 +4,7 @@ import AuthLayout from '../../components/auth/AuthLayout'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import { useAuth } from '../../context/AuthContext'
-import logo from '../../assets/logo.png'
+import logo from '../../assets/Logo.png'
 
 function GoogleIcon() {
   return (
@@ -39,13 +39,13 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
-        <div className="flex justify-center mb-5">
-          <img src={logo} alt="CVision AI" className="w-16 h-16 object-contain" />
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-[34rem] p-8 sm:p-12">
+        <div className="flex justify-center mb-6">
+          <img src={logo} alt="CVision AI" className="w-24 h-24 object-contain" />
         </div>
 
-        <h1 className="text-2xl font-bold text-navy text-center">Welcome Back</h1>
-        <p className="text-xs text-gray-500 text-center mt-1 mb-6">Access your recruitment and talent workspace</p>
+        <h1 className="text-3xl font-bold text-navy text-center">Welcome Back</h1>
+        <p className="text-sm text-slate-500 text-center mt-2 mb-8">Access your recruitment and talent workspace</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Work Email Address" required type="email" placeholder="minindu.r@claritydental.com" value={email} onChange={e => setEmail(e.target.value)} />
@@ -53,7 +53,7 @@ export default function Login() {
 
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-xs text-navy font-medium cursor-pointer">
-              <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} className="w-3.5 h-3.5 accent-navy" />
+              <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} className="w-4 h-4 accent-navy" />
               Remember this device
             </label>
             <Link to="/forgot-password" className="text-xs text-coral font-semibold hover:underline">Forgot Password?</Link>
@@ -69,7 +69,7 @@ export default function Login() {
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-navy hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-navy hover:bg-slate-50 transition-colors"
           >
             <GoogleIcon />
             <span>Sign in with Google</span>
