@@ -1,7 +1,6 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Bold, Italic, Underline, List, Link as LinkIcon, X } from 'lucide-react'
-import MainLayout from '../../layouts/MainLayout'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useJobs } from '../../context/JobContext'
@@ -30,10 +29,10 @@ export default function EditJob() {
     navigate(`/jobs/${id}`)
   }
 
-  if (!job) return <MainLayout><p>Job not found</p></MainLayout>
+  if (!job) return <><p>Job not found</p></>
 
   return (
-    <MainLayout topbarTitle="Welcome Back, Minindu!">
+    <>
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-navy">Edit Job Posting</h2>
@@ -109,6 +108,6 @@ export default function EditJob() {
           <Input label="Salary Range" required value={form.salary || ''} onChange={e => setForm({ ...form, salary: e.target.value })} />
         </div>
       </div>
-    </MainLayout>
+    </>
   )
 }

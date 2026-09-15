@@ -16,7 +16,7 @@ export default function Register() {
     if (form.password !== form.confirm) return alert('Passwords do not match')
     if (!form.agree) return alert('Please agree to the terms')
     register(form)
-    navigate('/jobs')
+    navigate('/dashboard')
   }
 
   return (

@@ -1,7 +1,6 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bold, Italic, Underline, List, Link as LinkIcon, X } from 'lucide-react'
-import MainLayout from '../../layouts/MainLayout'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useJobs } from '../../context/JobContext'
@@ -31,7 +30,7 @@ export default function CreateJob() {
   }
 
   return (
-    <MainLayout topbarTitle="Welcome Back, Minindu!">
+    <>
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-navy">Create New Job Posting</h2>
@@ -112,6 +111,6 @@ export default function CreateJob() {
           <Input label="Salary Range" required placeholder="e.g. $120,000 - $150,000 / year" value={form.salary} onChange={e => setForm({ ...form, salary: e.target.value })} />
         </div>
       </div>
-    </MainLayout>
+    </>
   )
 }

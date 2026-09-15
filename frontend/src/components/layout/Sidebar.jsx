@@ -1,10 +1,10 @@
-﻿import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Briefcase, Upload, Users, BarChart3, User, LogOut } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import logo from '../../assets/Logo.png'
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/jobs', label: 'Jobs Postings', icon: Briefcase },
   { to: '/cv-upload', label: 'CV Upload', icon: Upload },
   { to: '/candidates', label: 'Candidates', icon: Users },
@@ -28,6 +28,7 @@ export default function Sidebar() {
         <nav className="px-4 space-y-1.5 mt-2">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to}
+              end={to === '/'}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium transition-colors ${isActive ? 'text-white bg-[#172554]' : 'text-slate-600 hover:bg-slate-50'}`
               }>

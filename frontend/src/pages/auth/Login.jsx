@@ -27,14 +27,14 @@ export default function Login() {
   const handleSubmit = (e) => {
     e.preventDefault()
     login(email)
-    navigate('/jobs')
+    navigate('/dashboard')
   }
 
   const handleGoogleLogin = () => {
     // TODO: connect to real Google OAuth later
     alert('Google Sign-In clicked  connect OAuth later')
     login('google-user@example.com')
-    navigate('/jobs')
+    navigate('/dashboard')
   }
 
   return (

@@ -1,7 +1,6 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
-import MainLayout from '../../layouts/MainLayout'
 import Badge from '../../components/ui/Badge'
 import { useJobs } from '../../context/JobContext'
 
@@ -31,7 +30,7 @@ export default function SelectJob() {
   const recent = filtered.slice(0, 3)
 
   return (
-    <MainLayout topbarTitle="Evaluation Reports Dashboard">
+    <>
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-navy">Select Job Posting</h2>
@@ -53,6 +52,6 @@ export default function SelectJob() {
       <div className="grid grid-cols-3 gap-4">
         {filtered.map(j => <JobCard key={j.id} job={j} onClick={() => navigate(`/reports/${j.id}`)} />)}
       </div>
-    </MainLayout>
+    </>
   )
 }
