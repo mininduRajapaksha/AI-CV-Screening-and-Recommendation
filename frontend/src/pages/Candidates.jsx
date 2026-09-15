@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, ChevronDown, Download, ArrowLeft, CheckCircle, AlertCircle, Briefcase, GraduationCap, Mail, Phone } from 'lucide-react'; // අලුතින් Mail, Phone එකතු කළා
+import { Search, ChevronDown, Download, ArrowLeft, CheckCircle, AlertCircle, Briefcase, GraduationCap, Mail, Phone } from 'lucide-react'; 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
