@@ -40,11 +40,13 @@ export default function Sidebar() {
 
       <div className="px-4 pb-6 space-y-1.5">
         <div className="border-t border-slate-100 mb-3" />
-        <button className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-slate-600 hover:bg-slate-50 w-full">
+        <NavLink to="/profile" className={({ isActive }) =>
+          `flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium transition-colors ${isActive ? 'text-white bg-[#172554]' : 'text-slate-600 hover:bg-slate-50'}`
+        }>
           <User size={19} strokeWidth={1.75} /> Profile
-        </button>
+        </NavLink>
         <button onClick={() => { logout(); navigate('/login') }}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-red-500 hover:bg-red-50 w-full">
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-red-500 hover:bg-red-50 w-full cursor-pointer">
           <LogOut size={19} strokeWidth={1.75} /> Logout
         </button>
       </div>
