@@ -9,7 +9,7 @@ export default function ApiConfiguration() {
     <div className="w-full text-slate-800">
       
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">API Configuration</h1>
+        <h1 className="text-[28px] font-semibold leading-9 text-slate-900">API Configuration</h1>
         <p className="text-sm text-slate-500 mt-1">Manage external AI provider integrations.</p>
       </div>
 

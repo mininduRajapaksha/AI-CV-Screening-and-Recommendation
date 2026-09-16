@@ -8,7 +8,7 @@ export default function SystemStatus() {
     <div className="w-full text-slate-800">
       
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">System Status</h1>
+        <h1 className="text-[28px] font-semibold leading-9 text-slate-900">System Status</h1>
         <p className="text-sm text-slate-500 mt-1">Monitor application health and microservices.</p>
       </div>
 

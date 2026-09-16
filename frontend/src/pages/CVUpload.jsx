@@ -218,7 +218,7 @@ export default function CVUpload() {
 
       {/*page header*/}
       <div className="mb-6">
-        <h1 className="text-[28px] font-semibold leading-9 text-slate-900">CV Upload</h1>
+        <h1 className="text-2xl font-bold text-slate-900">CV Upload</h1>
 
         <p className="mt-1 text-sm leading-5 text-slate-500">
           Select a job posting, then upload candidate CVs for AI screening.
