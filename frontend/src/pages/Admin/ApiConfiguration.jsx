@@ -6,10 +6,10 @@ export default function ApiConfiguration() {
   const [showGeminiKey, setShowGeminiKey] = useState(false);
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen text-slate-800">
+    <div className="w-full text-slate-800">
       
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">API Configuration</h1>
+        <h1 className="text-2xl font-bold text-slate-900">API Configuration</h1>
         <p className="text-sm text-slate-500 mt-1">Manage external AI provider integrations.</p>
       </div>
 

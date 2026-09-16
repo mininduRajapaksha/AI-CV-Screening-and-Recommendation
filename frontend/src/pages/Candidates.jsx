@@ -250,7 +250,7 @@ export default function Candidates() {
   // --- CANDIDATE PROFILE VIEW ---
   if (selectedCandidate) {
     return (
-      <div className="p-6 bg-slate-50 min-h-screen text-slate-800">
+      <div className="w-full text-slate-800">
         
         {/* Back Button */}
         <button 
@@ -394,10 +394,10 @@ export default function Candidates() {
 
   // --- CANDIDATES LIST VIEW ---
   return (
-    <div className="p-6 min-h-screen text-slate-800">
+    <div className="w-full text-slate-800">
       
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Candidates</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Candidates</h1>
         <p className="text-sm text-slate-500 mt-1">AI ranked results for your selected job posting</p>
       </div>
 

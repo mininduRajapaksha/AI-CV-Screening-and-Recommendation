@@ -5,10 +5,10 @@ export default function SystemStatus() {
   const currentTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen text-slate-800">
+    <div className="w-full text-slate-800">
       
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">System Status</h1>
+        <h1 className="text-2xl font-bold text-slate-900">System Status</h1>
         <p className="text-sm text-slate-500 mt-1">Monitor application health and microservices.</p>
       </div>
 
