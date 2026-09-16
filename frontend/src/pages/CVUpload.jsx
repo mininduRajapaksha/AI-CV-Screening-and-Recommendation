@@ -519,7 +519,7 @@ export default function CVUpload() {
 
             <p className="mx-auto mt-2 max-w-[340px] text-sm leading-5 text-slate-500">
               {files.length}{""}
-              {files.length === 1 ? " CV has" : " CVs have "}{""}
+              {files.length === 1 ? " CV has " : " CVs have "}{""}
               been successfully screened
             </p>
 
