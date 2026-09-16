@@ -48,7 +48,7 @@ export default function Dashboard() {
   const navigate = useNavigate(); // Hook initialized for route navigation
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen text-slate-800">
+    <div className="p-6 min-h-screen text-slate-800">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
 
       {/* KPI Cards */}

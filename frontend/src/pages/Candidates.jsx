@@ -394,7 +394,7 @@ export default function Candidates() {
 
   // --- CANDIDATES LIST VIEW ---
   return (
-    <div className="p-6 bg-slate-50 min-h-screen text-slate-800">
+    <div className="p-6 min-h-screen text-slate-800">
       
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Candidates</h1>
