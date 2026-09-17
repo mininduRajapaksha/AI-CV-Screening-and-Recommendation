@@ -5,7 +5,9 @@ import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
 import Toggle from '../../components/ui/Toggle'
+import CandidateProfileModal from '../../components/candidates/CandidateProfileModal'
 import { useJobs } from '../../context/JobContext'
+import { downloadCSV, downloadPDF } from '../../utils/exportUtils'
 
 function MatchRing({ value }) {
   const color = value >= 80 ? '#22c55e' : value >= 60 ? '#f59e0b' : '#ef4444'
@@ -49,9 +51,16 @@ export default function CandidateRanking() {
   const [recFilters, setRecFilters] = useState({ 'Highly Recommended': true, 'Recommended': true, 'Not Recommended': false })
   const [showCsv, setShowCsv] = useState(false)
   const [showPdf, setShowPdf] = useState(false)
+  const [downloading, setDownloading] = useState(false)
 
-  const [csvCols, setCsvCols] = useState({ rank: true, appliedRole: true, recLevel: true, email: true, name: true, match: true, dateApplied: true })
+  // NEW: selected candidate for profile modal
+  const [selectedCandidate, setSelectedCandidate] = useState(null)
+
+  const [csvCols, setCsvCols] = useState({
+    rank: true, appliedRole: true, recLevel: true, email: true, name: true, match: true, dateApplied: true
+  })
   const [csvName, setCsvName] = useState('senior_product_designer_ranking_2026.csv')
+
   const [pdfTitle, setPdfTitle] = useState('Senior Product Designer - Evaluation Summary')
   const [pdfOrientation, setPdfOrientation] = useState('Portrait')
   const [pdfCharts, setPdfCharts] = useState(true)
@@ -67,6 +76,57 @@ export default function CandidateRanking() {
 
   const stats = { total: 342, highly: 25, avg: 70, shortlisted: 42 }
   const recVariant = { 'Highly Recommended': 'success', 'Recommended': 'warning', 'Not Recommended': 'danger' }
+
+  const handleExportCSV = () => {
+    const map = {
+      rank: { key: 'rank', label: 'Rank' },
+      name: { key: 'name', label: 'Candidate Name' },
+      appliedRole: { key: 'appliedFor', label: 'Applied Role' },
+      match: { key: 'match', label: 'AI Match %' },
+      recLevel: { key: 'recommendation', label: 'Recommendation Level' },
+      dateApplied: { key: 'dateApplied', label: 'Date Applied' },
+      email: { key: 'email', label: 'Email Contact' }
+    }
+    const columns = Object.keys(csvCols)
+      .filter(k => csvCols[k])
+      .map(k => map[k])
+      .filter(Boolean)
+
+    if (columns.length === 0) {
+      alert('Please select at least one column.')
+      return
+    }
+
+    const enriched = filtered.map(c => ({ ...c, dateApplied: '2026-10-12' }))
+
+    downloadCSV({
+      filename: csvName.endsWith('.csv') ? csvName : `${csvName}.csv`,
+      columns,
+      candidates: enriched
+    })
+
+    setShowCsv(false)
+  }
+
+  const handleExportPDF = async () => {
+    setDownloading(true)
+    try {
+      await downloadPDF({
+        filename: pdfTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.pdf',
+        title: pdfTitle,
+        orientation: pdfOrientation,
+        candidates: filtered,
+        jobTitle: job?.title || 'Senior Product Designer',
+        options: { charts: pdfCharts, branding: pdfBranding, emails: pdfEmails }
+      })
+      setShowPdf(false)
+    } catch (err) {
+      console.error(err)
+      alert('Failed to generate PDF. Check console.')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   return (
     <>
@@ -126,7 +186,12 @@ export default function CandidateRanking() {
                     <td className="px-5 py-4"><MatchRing value={c.match} /></td>
                     <td className="px-5 py-4"><Badge variant={recVariant[c.recommendation]}>{c.recommendation}</Badge></td>
                     <td className="px-5 py-4 text-right">
-                      <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold text-navy hover:bg-gray-50">View Profile</button>
+                      <button
+                        onClick={() => setSelectedCandidate(c)}
+                        className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold text-navy hover:bg-gray-50"
+                      >
+                        View Profile
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -172,6 +237,15 @@ export default function CandidateRanking() {
         </div>
       </div>
 
+      {/* Candidate Profile Modal */}
+      <CandidateProfileModal
+        open={!!selectedCandidate}
+        onClose={() => setSelectedCandidate(null)}
+        candidate={selectedCandidate}
+        jobSkills={job?.skills || []}
+      />
+
+      {/* CSV Modal */}
       <Modal open={showCsv} onClose={() => setShowCsv(false)} maxWidth="max-w-lg">
         <div className="p-6">
           <h2 className="text-xl font-bold text-navy mb-1">Export Candidates (CSV)</h2>
@@ -199,17 +273,18 @@ export default function CandidateRanking() {
           <p className="text-xs font-semibold text-navy mb-2">Format Preview</p>
           <div className="bg-gray-50 rounded-lg p-3 text-[11px] font-mono text-gray-600 leading-relaxed mb-5">
             Rank, Name, Applied Role, AI Match, Status
-            #01, Harshani, Senior Product Designer, 98%, Highly Recommended
-            #02, Kasun, Senior Product Designer, 82%, Highly Recommended
+            <br />#01, Harshani, Senior Product Designer, 98%, Highly Recommended
+            <br />#02, Kasun, Senior Product Designer, 82%, Highly Recommended
           </div>
 
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setShowCsv(false)}>Cancel</Button>
-            <Button variant="coral" onClick={() => { setShowCsv(false); alert('CSV downloaded') }}>Export CSV</Button>
+            <Button variant="coral" onClick={handleExportCSV}>Export CSV</Button>
           </div>
         </div>
       </Modal>
 
+      {/* PDF Modal */}
       <Modal open={showPdf} onClose={() => setShowPdf(false)} maxWidth="max-w-3xl">
         <div className="p-6 grid grid-cols-2 gap-6">
           <div>
@@ -245,7 +320,9 @@ export default function CandidateRanking() {
 
             <div className="flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setShowPdf(false)}>Cancel</Button>
-              <Button variant="coral" onClick={() => { setShowPdf(false); alert('PDF generated') }}>Generate PDF</Button>
+              <Button variant="coral" onClick={handleExportPDF} disabled={downloading}>
+                {downloading ? 'Generating...' : 'Generate PDF'}
+              </Button>
             </div>
           </div>
 
@@ -253,7 +330,7 @@ export default function CandidateRanking() {
             <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Preview</p>
             <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-navy">TalentFlow AI Report</span>
+                <span className="text-xs font-bold text-navy">CVision AI Report</span>
                 <span className="w-2 h-2 rounded-full bg-coral"></span>
               </div>
               <div className="flex gap-2 mb-3">
