@@ -21,15 +21,15 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
-        <div className="flex justify-center mb-4">
-          <img src={logo} alt="CVision AI" className="w-14 h-14 object-contain" />
+      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6">
+        <div className="flex justify-center mb-2">
+          <img src={logo} alt="CVision AI" className="w-12 h-12 object-contain" />
         </div>
 
-        <h1 className="text-2xl font-bold text-navy text-center">Create Account</h1>
-        <p className="text-xs text-gray-500 text-center mt-1 mb-6">Join TalentFlow to start managing active candidates</p>
+        <h1 className="text-xl font-bold text-navy text-center">Create Account</h1>
+        <p className="text-xs text-gray-500 text-center mt-1 mb-4">Join TalentFlow to start managing active candidates</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <Input label="Full Name" required placeholder="e.g. Minindu Ratnayake" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
           <Input label="Work Email Address" required type="email" placeholder="name@company.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
 
@@ -56,7 +56,7 @@ export default function Register() {
           <Button type="submit" variant="navy" className="w-full">Create Account</Button>
         </form>
 
-        <p className="text-center text-xs text-gray-500 mt-6">
+        <p className="text-center text-xs text-gray-500 mt-3">
           Already have an account? <Link to="/login" className="text-coral font-semibold hover:underline">Sign In</Link>
         </p>
       </div>

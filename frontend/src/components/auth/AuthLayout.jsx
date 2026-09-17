@@ -9,30 +9,36 @@ const features = [
 
 export default function AuthLayout({ children }) {
   return (
-    <div className="min-h-screen flex">
-      <div className="hidden lg:flex w-[45%] bg-gradient-to-b from-authblue to-authblue-dark p-12 flex-col justify-center text-white">
-        <div className="max-w-md">
-          <div className="w-44 h-44 mb-8 rounded-3xl bg-white/10 backdrop-blur flex items-center justify-center border border-white/20 p-5">
-            <img src={logo} alt="CVision AI" className="w-36 h-36 object-contain" />
+    <div className="h-screen w-screen overflow-hidden flex">
+      {/* LEFT PANEL */}
+      <div className="hidden lg:flex w-[45%] bg-gradient-to-b from-authblue to-authblue-dark px-10 py-8 flex-col justify-center text-white overflow-hidden">
+        <div className="max-w-md mx-auto w-full">
+          {/* Logo */}
+          <div className="w-32 h-32 mb-6 rounded-3xl bg-white/10 backdrop-blur flex items-center justify-center border border-white/20 p-4 mx-auto lg:mx-0">
+            <img src={logo} alt="CVision AI" className="w-24 h-24 object-contain" />
           </div>
 
-          <h1 className="text-4xl font-extrabold leading-tight mb-3">
+          {/* Heading */}
+          <h1 className="text-3xl xl:text-4xl font-extrabold leading-tight mb-2">
             AI-Powered<br />CV Screening and<br />Recommendation<br />System
           </h1>
-          <p className="font-semibold mb-4">Smarter Hiring. Better Talent.</p>
-          <p className="text-sm text-white/85 mb-8 leading-relaxed">
+
+          <p className="font-semibold mb-2 text-sm">Smarter Hiring. Better Talent.</p>
+
+          <p className="text-xs text-white/85 mb-5 leading-relaxed">
             Leverage the power of AI to automatically screen CVs, analyze candidate skills and core experience, and instantly retrieve the best recommendations faster and fairer.
           </p>
 
-          <div className="space-y-5">
+          {/* Features */}
+          <div className="space-y-3">
             {features.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex gap-4 items-start">
-                <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-5 h-5" />
+              <div key={title} className="flex gap-3 items-start">
+                <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-semibold text-sm">{title}</div>
-                  <div className="text-xs text-white/80 leading-relaxed">{desc}</div>
+                  <div className="font-semibold text-xs">{title}</div>
+                  <div className="text-[11px] text-white/80 leading-snug">{desc}</div>
                 </div>
               </div>
             ))}
@@ -40,7 +46,8 @@ export default function AuthLayout({ children }) {
         </div>
       </div>
 
-      <div className="flex-1 bg-[#f0f2f5] flex items-center justify-center p-6">
+      {/* RIGHT PANEL */}
+      <div className="flex-1 bg-[#f0f2f5] flex items-center justify-center p-6 h-screen overflow-hidden">
         {children}
       </div>
     </div>

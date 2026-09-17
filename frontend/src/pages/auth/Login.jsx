@@ -31,7 +31,6 @@ export default function Login() {
   }
 
   const handleGoogleLogin = () => {
-    // TODO: connect to real Google OAuth later
     alert('Google Sign-In clicked  connect OAuth later')
     login('google-user@example.com')
     navigate('/jobs')
@@ -39,15 +38,15 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
-        <div className="flex justify-center mb-5">
-          <img src={logo} alt="CVision AI" className="w-16 h-16 object-contain" />
+      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6">
+        <div className="flex justify-center mb-3">
+          <img src={logo} alt="CVision AI" className="w-14 h-14 object-contain" />
         </div>
 
         <h1 className="text-2xl font-bold text-navy text-center">Welcome Back</h1>
-        <p className="text-xs text-gray-500 text-center mt-1 mb-6">Access your recruitment and talent workspace</p>
+        <p className="text-xs text-gray-500 text-center mt-1 mb-4">Access your recruitment and talent workspace</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <Input label="Work Email Address" required type="email" placeholder="minindu.r@claritydental.com" value={email} onChange={e => setEmail(e.target.value)} />
           <Input label="Password" required withEye placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
 
@@ -76,7 +75,7 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-gray-500 mt-6">
+        <p className="text-center text-xs text-gray-500 mt-4">
           Don't have an account? <Link to="/register" className="text-coral font-semibold hover:underline">Register</Link>
         </p>
       </div>

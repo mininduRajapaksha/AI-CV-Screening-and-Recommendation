@@ -15,7 +15,10 @@
     "vite": "^8.3.0"
   },
   "dependencies": {
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.45.0",
+    "react-icons": "^5.7.0",
     "react-router-dom": "^7.18.3"
   }
 }
