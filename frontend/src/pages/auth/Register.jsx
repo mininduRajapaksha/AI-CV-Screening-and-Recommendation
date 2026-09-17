@@ -44,7 +44,6 @@ export default function Register() {
               className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-navy focus:outline-none focus:ring-2 focus:ring-coral/30">
               <option>HR Manager</option>
               <option>Recruiter</option>
-              <option>Admin</option>
             </select>
           </div>
 
