@@ -1,15 +1,15 @@
 import { Outlet, useNavigate } from "react-router-dom";
-import Sidebar from "../components/layout/Sidebar";
+import AdminSidebar from "../components/layout/AdminSidebar";
 import Navbar from "../components/layout/Navbar";
 
-//initial user details
-const mockUser = {
+// initial admin details
+const mockAdmin = {
   name: "Minindu R.",
   firstName: "Minindu",
-  role: "HR Manager",
+  role: "Admin",
 };
 
-export default function MainLayout() {
+export default function AdminLayout() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -19,10 +19,10 @@ export default function MainLayout() {
 
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: "#EFF6FF" }}>
-      <Sidebar onLogout={handleLogout} />
+      <AdminSidebar onLogout={handleLogout} />
 
       <div className="flex-1 flex flex-col">
-        <Navbar user={mockUser} />
+        <Navbar user={mockAdmin} />
 
         <main className="flex-1 p-8">
           <Outlet />

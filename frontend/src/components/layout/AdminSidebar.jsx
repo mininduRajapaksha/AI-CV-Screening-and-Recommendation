@@ -1,24 +1,22 @@
 import { NavLink } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Briefcase,
-  UploadCloud,
   Users,
-  BarChart3,
+  KeyRound,
+  Server,
+  Database,
   User,
   LogOut,
 } from "lucide-react";
 import logo from "../../assets/Logo.png";
 
 const navLinks = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/" },
-  { label: "Jobs Postings", icon: Briefcase, to: "/jobs" },
-  { label: "CV Upload", icon: UploadCloud, to: "/cv-upload" },
-  { label: "Candidates", icon: Users, to: "/candidates" },
-  { label: "Reports", icon: BarChart3, to: "/reports" },
+  { label: "User Management", icon: Users, to: "/admin" },
+  { label: "API Configuration", icon: KeyRound, to: "/admin/api-configuration" },
+  { label: "System Status", icon: Server, to: "/admin/system-status" },
+  { label: "Database Status", icon: Database, to: "/admin/database-status" },
 ];
 
-export default function Sidebar({ onLogout }) {
+export default function AdminSidebar({ onLogout }) {
   const linkClasses = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium transition-colors ${
       isActive ? "text-white bg-[#172554]" : "text-slate-600 hover:bg-slate-50"
@@ -38,7 +36,12 @@ export default function Sidebar({ onLogout }) {
         {/* Nav links */}
         <nav className="px-4 space-y-1.5 mt-2">
           {navLinks.map(({ label, icon: Icon, to }) => (
-            <NavLink key={label} to={to} className={linkClasses}>
+            <NavLink 
+              key={label} 
+              to={to} 
+              end={to === "/admin"} 
+              className={linkClasses}
+            >
               <Icon size={19} strokeWidth={1.75} />
               {label}
             </NavLink>
@@ -49,13 +52,13 @@ export default function Sidebar({ onLogout }) {
       {/* Bottom section */}
       <div className="px-4 pb-6 space-y-1.5">
         <div className="border-t border-slate-100 mb-3" />
-        <NavLink to="/profile" className={linkClasses}>
+        <NavLink to="/admin/profile" className={linkClasses}>
           <User size={19} strokeWidth={1.75} />
           Profile
         </NavLink>
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-red-500 hover:bg-red-50"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-red-500 hover:bg-red-50 cursor-pointer"
         >
           <LogOut size={19} strokeWidth={1.75} />
           Logout

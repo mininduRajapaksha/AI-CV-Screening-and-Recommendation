@@ -7,14 +7,14 @@ export default function Input({ label, required, type = 'text', withEye, classNa
   return (
     <div className={className}>
       {label && (
-        <label className="block text-xs font-semibold text-navy mb-1.5">
+        <label className="block text-xs font-semibold text-navy mb-2">
           {label} {required && <span className="text-coral">*</span>}
         </label>
       )}
       <div className="relative">
         <input
           type={inputType}
-          className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-navy placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-coral/30 focus:border-coral"
+          className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-navy placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-coral/30 focus:border-coral"
           {...props}
         />
         {withEye && (

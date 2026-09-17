@@ -1,7 +1,6 @@
-﻿import { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Search, Filter, ChevronLeft, User } from 'lucide-react'
-import Layout from '../../components/layout/Layout'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
@@ -130,7 +129,7 @@ export default function CandidateRanking() {
   }
 
   return (
-    <Layout topbarTitle={`Evaluation Reports / ${job?.title || 'Senior Product Designer'}`}>
+    <>
       <Link to="/reports" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-navy mb-3">
         <ChevronLeft className="w-4 h-4" /> Back to Reports
       </Link>
@@ -353,6 +352,6 @@ export default function CandidateRanking() {
           </div>
         </div>
       </Modal>
-    </Layout>
+    </>
   )
 }
