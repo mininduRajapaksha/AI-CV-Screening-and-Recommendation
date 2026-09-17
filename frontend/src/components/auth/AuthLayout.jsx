@@ -1,4 +1,4 @@
-﻿import { Zap, Target, ShieldCheck } from 'lucide-react'
+import { Zap, Target, ShieldCheck } from 'lucide-react'
 import logo from '../../assets/Logo.png'
 
 const features = [
@@ -9,21 +9,12 @@ const features = [
 
 export default function AuthLayout({ children }) {
   return (
-<<<<<<< HEAD
-    <div className="h-screen w-screen overflow-hidden flex">
-      {/* LEFT PANEL */}
-      <div className="hidden lg:flex w-[45%] bg-gradient-to-b from-authblue to-authblue-dark px-10 py-8 flex-col justify-center text-white overflow-hidden">
-        <div className="max-w-md mx-auto w-full">
-          {/* Logo */}
-          <div className="w-32 h-32 mb-6 rounded-3xl bg-white/10 backdrop-blur flex items-center justify-center border border-white/20 p-4 mx-auto lg:mx-0">
-            <img src={logo} alt="CVision AI" className="w-24 h-24 object-contain" />
-          </div>
-=======
     <div className="min-h-screen flex">
-      <aside className="hidden lg:flex w-[49%] min-h-screen bg-gradient-to-b from-authblue to-authblue-dark px-20 py-12 flex-col justify-center text-white">
-        <div className="max-w-lg">
-          <img src={logo} alt="CVision AI" className="w-64 h-64 object-contain mb-8" />
->>>>>>> 2297b78a2ecd081de10f34fafed8f4f52ee4c4d6
+      <aside className="hidden lg:flex w-[49%] min-h-screen bg-gradient-to-b from-authblue to-authblue-dark px-12 py-12 flex-col justify-center text-white">
+        <div className="max-w-lg mx-auto w-full">
+          <div className="w-24 h-24 mb-6 rounded-3xl bg-white/10 backdrop-blur flex items-center justify-center border border-white/20 p-4">
+            <img src={logo} alt="CVision AI" className="w-20 h-20 object-contain" />
+          </div>
 
           {/* Heading */}
           <h1 className="text-3xl xl:text-4xl font-extrabold leading-tight mb-2">
@@ -53,12 +44,7 @@ export default function AuthLayout({ children }) {
         </div>
       </aside>
 
-<<<<<<< HEAD
-      {/* RIGHT PANEL */}
-      <div className="flex-1 bg-[#f0f2f5] flex items-center justify-center p-6 h-screen overflow-hidden">
-=======
       <main className="flex-1 min-h-screen bg-[#eef3f8] flex items-center justify-center p-6 lg:p-12">
->>>>>>> 2297b78a2ecd081de10f34fafed8f4f52ee4c4d6
         {children}
       </main>
     </div>

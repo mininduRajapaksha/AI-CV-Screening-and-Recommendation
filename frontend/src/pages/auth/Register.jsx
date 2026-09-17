@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthLayout from '../../components/auth/AuthLayout'
 import Input from '../../components/ui/Input'
@@ -21,23 +21,13 @@ export default function Register() {
 
   return (
     <AuthLayout>
-<<<<<<< HEAD
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6">
-        <div className="flex justify-center mb-2">
-          <img src={logo} alt="CVision AI" className="w-12 h-12 object-contain" />
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 sm:p-10">
+        <div className="flex justify-center mb-4">
+          <img src={logo} alt="CVision AI" className="w-16 h-16 object-contain" />
         </div>
 
-        <h1 className="text-xl font-bold text-navy text-center">Create Account</h1>
-        <p className="text-xs text-gray-500 text-center mt-1 mb-4">Join TalentFlow to start managing active candidates</p>
-=======
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-[34rem] p-8 sm:p-12">
-        <div className="flex justify-center mb-5">
-          <img src={logo} alt="CVision AI" className="w-20 h-20 object-contain" />
-        </div>
-
-        <h1 className="text-3xl font-bold text-navy text-center">Create Account</h1>
-        <p className="text-sm text-slate-500 text-center mt-2 mb-8">Join TalentFlow to start managing active candidates</p>
->>>>>>> 2297b78a2ecd081de10f34fafed8f4f52ee4c4d6
+        <h1 className="text-2xl font-bold text-navy text-center">Create Account</h1>
+        <p className="text-xs text-slate-500 text-center mt-1 mb-6">Join TalentFlow to start managing active candidates</p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <Input label="Full Name" required placeholder="e.g. Minindu Ratnayake" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />

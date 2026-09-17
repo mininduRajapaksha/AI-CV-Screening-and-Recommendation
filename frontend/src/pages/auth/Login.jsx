@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthLayout from '../../components/auth/AuthLayout'
 import Input from '../../components/ui/Input'
@@ -38,23 +38,13 @@ export default function Login() {
 
   return (
     <AuthLayout>
-<<<<<<< HEAD
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6">
-        <div className="flex justify-center mb-3">
-          <img src={logo} alt="CVision AI" className="w-14 h-14 object-contain" />
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 sm:p-10">
+        <div className="flex justify-center mb-4">
+          <img src={logo} alt="CVision AI" className="w-16 h-16 object-contain" />
         </div>
 
         <h1 className="text-2xl font-bold text-navy text-center">Welcome Back</h1>
-        <p className="text-xs text-gray-500 text-center mt-1 mb-4">Access your recruitment and talent workspace</p>
-=======
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-[34rem] p-8 sm:p-12">
-        <div className="flex justify-center mb-6">
-          <img src={logo} alt="CVision AI" className="w-24 h-24 object-contain" />
-        </div>
-
-        <h1 className="text-3xl font-bold text-navy text-center">Welcome Back</h1>
-        <p className="text-sm text-slate-500 text-center mt-2 mb-8">Access your recruitment and talent workspace</p>
->>>>>>> 2297b78a2ecd081de10f34fafed8f4f52ee4c4d6
+        <p className="text-xs text-slate-500 text-center mt-1 mb-6">Access your recruitment and talent workspace</p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <Input label="Work Email Address" required type="email" placeholder="minindu.r@claritydental.com" value={email} onChange={e => setEmail(e.target.value)} />
