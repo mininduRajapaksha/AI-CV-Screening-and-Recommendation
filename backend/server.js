@@ -15,7 +15,10 @@ app.use(express.urlencoded({ extended: true }))
 
 // Routes
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const candidateRoutes = require("./routes/candidateRoutes"); 
+
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/candidates", candidateRoutes); 
 
 //Database connection
 connectDB()
