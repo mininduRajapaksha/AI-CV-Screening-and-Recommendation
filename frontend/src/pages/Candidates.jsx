@@ -132,7 +132,7 @@ const candidatesData = [
       { title: "Junior DevOps Engineer", duration: "1.5 Years", company: "CloudOps Lanka" }
     ],
     education: [
-      { degree: "BSc IT", SLIIT: "SLIIT - 2024" }
+      { degree: "BSc IT", institution: "SLIIT - 2024" }
     ]
   },
   { 
@@ -261,7 +261,7 @@ export default function Candidates() {
           Back to Candidates
         </button>
 
-        {/* Candidate Header Card - Updated to match Image 1 */}
+        {/* Candidate Header Card */}
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           
           <div className="flex items-start gap-5">
@@ -299,15 +299,14 @@ export default function Candidates() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           {/* Left Column: AI Evaluation & Justification */}
-          <div className="space-y-6">
+          {/* මෙහි space-y-6 වෙනුවට space-y-4 භාවිතා කර ඇත */}
+          <div className="space-y-4">
             <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
               <h3 className="text-sm font-bold mb-4">AI Evaluation</h3>
               <div className="flex flex-col items-center justify-center py-4 mb-2">
-                {/* Larger Progress Bar */}
                 <div className="my-2">
                   <LargeCircularProgress value={selectedCandidate.match} color={selectedCandidate.color} />
                 </div>
-                {/* Larger Recommendation Badge */}
                 <span className={`mt-5 px-6 py-2.5 ${selectedCandidate.bg} text-white rounded-lg text-sm font-bold shadow-sm`}>
                   {selectedCandidate.rec}
                 </span>
@@ -323,19 +322,20 @@ export default function Candidates() {
           </div>
 
           {/* Right Column: Skills, Experience & Education */}
-          <div className="space-y-6">
+          {/* මෙහිද space-y-4 භාවිතා කර ඇත සමමිතිය සඳහා */}
+          <div className="space-y-4">
             
             <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
               <h3 className="text-sm font-bold mb-4">Skills & Experience</h3>
               
               {/* Matched Skills */}
-              <div className="mb-4">
-                <span className="text-xs font-medium text-slate-600 flex items-center gap-1.5 mb-2">
+              <div className="mb-5">
+                <span className="text-xs font-medium text-slate-600 flex items-center gap-1.5 mb-3">
                   <CheckCircle size={14} className="text-green-600" /> Matched Skills
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {selectedCandidate.matchedSkills.map((skill, i) => (
-                    <span key={i} className="px-3 py-1 bg-indigo-200 text-indigo-900 rounded-md text-xs font-medium">
+                    <span key={i} className="px-4 py-1.5 bg-[#e0e7ff] text-[#4338ca] rounded-md text-xs font-semibold">
                       {skill}
                     </span>
                   ))}
@@ -344,12 +344,12 @@ export default function Candidates() {
 
               {/* Missing Skills */}
               <div>
-                <span className="text-xs font-medium text-slate-600 flex items-center gap-1.5 mb-2">
+                <span className="text-xs font-medium text-slate-600 flex items-center gap-1.5 mb-3">
                   <AlertCircle size={14} className="text-red-500" /> Missing Skills
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {selectedCandidate.missingSkills.map((skill, i) => (
-                    <span key={i} className="px-3 py-1 bg-rose-200 text-rose-800 rounded-md text-xs font-medium">
+                    <span key={i} className="px-4 py-1.5 bg-[#ffe4e6] text-[#e11d48] rounded-md text-xs font-semibold">
                       {skill}
                     </span>
                   ))}
@@ -359,25 +359,25 @@ export default function Candidates() {
 
             {/* Experience & Education */}
             <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
-              <h3 className="text-sm font-bold mb-4">Experience & Education</h3>
+              <h3 className="text-sm font-bold mb-5">Experience & Education</h3>
               
-              <div className="space-y-4 text-xs">
+              <div className="space-y-5 text-xs">
                 {selectedCandidate.experience.map((exp, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="p-1.5 bg-slate-100 rounded-md text-indigo-900 mt-0.5"><Briefcase size={14} /></div>
+                  <div key={i} className="flex items-start gap-4">
+                    <div className="w-2 h-2 mt-1.5 rounded-full bg-[#4a638b] shrink-0"></div>
                     <div>
-                      <h4 className="font-bold text-slate-800">{exp.title}</h4>
-                      <p className="text-slate-500">{exp.duration} - {exp.company}</p>
+                      <h4 className="font-bold text-slate-800 text-[13px]">{exp.title}</h4>
+                      <p className="text-slate-500 mt-1">{exp.duration} - {exp.company}</p>
                     </div>
                   </div>
                 ))}
 
                 {selectedCandidate.education.map((edu, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="p-1.5 bg-slate-100 rounded-md text-indigo-900 mt-0.5"><GraduationCap size={14} /></div>
+                  <div key={i} className="flex items-start gap-4">
+                    <div className="w-2 h-2 mt-1.5 rounded-full bg-[#4a638b] shrink-0"></div>
                     <div>
-                      <h4 className="font-bold text-slate-800">{edu.degree}</h4>
-                      <p className="text-slate-500">{edu.institution}</p>
+                      <h4 className="font-bold text-slate-800 text-[13px]">{edu.degree}</h4>
+                      <p className="text-slate-500 mt-1">{edu.institution}</p>
                     </div>
                   </div>
                 ))}
@@ -424,22 +424,23 @@ export default function Candidates() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      {/* Enhanced Search Bar and Filters Area */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-white rounded-xl border border-slate-100">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search size={18} className="text-slate-400" />
           </div>
           <input 
             type="text" 
-            placeholder="Search by name or role........." 
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            placeholder="Search by name or skill........." 
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="relative w-full md:w-48">
+        <div className="relative w-full md:w-56">
           <select 
-            className="w-full appearance-none pl-4 pr-10 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+            className="w-full appearance-none pl-4 pr-10 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer text-slate-600 font-medium"
             value={filterRec}
             onChange={(e) => setFilterRec(e.target.value)}
           >
@@ -451,9 +452,9 @@ export default function Candidates() {
             <ChevronDown size={16} className="text-slate-500" />
           </div>
         </div>
-        <div className="relative w-full md:w-48">
+        <div className="relative w-full md:w-56">
           <select 
-            className="w-full appearance-none pl-4 pr-10 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+            className="w-full appearance-none pl-4 pr-10 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer text-slate-600 font-medium"
             value={filterJob}
             onChange={(e) => setFilterJob(e.target.value)}
           >
@@ -498,7 +499,7 @@ export default function Candidates() {
                     <td className="p-4 text-center">
                       <button 
                         onClick={() => setSelectedCandidate(candidate)}
-                        className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md text-xs font-medium transition-colors cursor-pointer"
+                        className="px-4 py-1.5 border border-indigo-500 text-indigo-600 hover:bg-indigo-50 bg-white rounded-full text-xs font-medium transition-colors cursor-pointer"
                       >
                         View Profile
                       </button>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Code, Monitor, Cpu, Circle } from 'lucide-react';
+import { Monitor, Clock, Circle } from 'lucide-react';
 
 export default function SystemStatus() {
   const currentTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
@@ -18,10 +18,10 @@ export default function SystemStatus() {
         {/* Frontend Card */}
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-slate-100 rounded-lg text-slate-700">
-              <Code size={20} />
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-500">
+              <Monitor size={20} />
             </div>
-            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold">
+            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-300 text-green-600 rounded-md text-xs font-semibold">
               <Circle size={8} fill="currentColor" className="text-green-500" /> Online
             </span>
           </div>
@@ -33,10 +33,15 @@ export default function SystemStatus() {
         {/* Backend API Card */}
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-slate-100 rounded-lg text-slate-700">
-              <Monitor size={20} />
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-500">
+              {/* Custom Cloud & Server Icon exactly matching the 2nd image */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6.5 14a4.5 4.5 0 0 1 0-9 6 6 0 0 1 11.8 1.5A4 4 0 0 1 17.5 14H6.5z" />
+                <rect x="4" y="17" width="16" height="4" rx="1" />
+                <circle cx="7" cy="19" r="1" fill="currentColor" stroke="none" />
+              </svg>
             </div>
-            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold">
+            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-300 text-green-600 rounded-md text-xs font-semibold">
               <Circle size={8} fill="currentColor" className="text-green-500" /> Online
             </span>
           </div>
@@ -48,10 +53,10 @@ export default function SystemStatus() {
         {/* AI Engine Card */}
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-slate-100 rounded-lg text-slate-700">
-              <Cpu size={20} />
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-500">
+              <Clock size={20} />
             </div>
-            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold">
+            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-300 text-green-600 rounded-md text-xs font-semibold">
               <Circle size={8} fill="currentColor" className="text-green-500" /> Online
             </span>
           </div>
@@ -70,7 +75,7 @@ export default function SystemStatus() {
             <h2 className="font-bold text-base">System Resource Usage</h2>
             <p className="text-xs text-slate-500 mt-1">Live metrics · Updated every 30s</p>
           </div>
-          <div className="px-3 py-1 bg-slate-200 text-slate-700 rounded-md text-sm font-semibold">
+          <div className="px-5 py-1.5 bg-indigo-50/50 border border-indigo-200 text-indigo-600 rounded-full text-[15px] font-semibold tracking-wide shadow-sm">
             {currentTime}
           </div>
         </div>
@@ -85,8 +90,8 @@ export default function SystemStatus() {
                 <span className="font-medium text-slate-700">42%</span>
               </div>
             </div>
-            <div className="w-full bg-slate-100 rounded-full h-2.5">
-              <div className="bg-black h-2.5 rounded-full" style={{ width: '42%' }}></div>
+            <div className="w-full bg-slate-100 rounded-lg h-3.5">
+              <div className="bg-[#1e293b] h-3.5 rounded-lg" style={{ width: '42%' }}></div>
             </div>
           </div>
 
@@ -99,8 +104,8 @@ export default function SystemStatus() {
                 <span className="font-medium text-slate-700">78%</span>
               </div>
             </div>
-            <div className="w-full bg-slate-100 rounded-full h-2.5">
-              <div className="bg-yellow-400 h-2.5 rounded-full" style={{ width: '78%' }}></div>
+            <div className="w-full bg-slate-100 rounded-lg h-3.5">
+              <div className="bg-yellow-400 h-3.5 rounded-lg" style={{ width: '78%' }}></div>
             </div>
           </div>
 
@@ -113,8 +118,8 @@ export default function SystemStatus() {
                 <span className="font-medium text-slate-700">23%</span>
               </div>
             </div>
-            <div className="w-full bg-slate-100 rounded-full h-2.5">
-              <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '23%' }}></div>
+            <div className="w-full bg-slate-100 rounded-lg h-3.5">
+              <div className="bg-green-500 h-3.5 rounded-lg" style={{ width: '23%' }}></div>
             </div>
           </div>
         </div>
