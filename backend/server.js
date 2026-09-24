@@ -1,8 +1,10 @@
 const express = require("express")
 const cors = require("cors")
-const connectDB = require("./config/db")
 
 require("dotenv").config()
+
+const connectDB = require("./config/db")
+const cvRoutes = require("./routes/cvRoutes")
 
 const app = express()
 
@@ -15,6 +17,8 @@ app.use(express.urlencoded({ extended: true }))
 
 //Database connection
 connectDB()
+
+app.use('/api/cvs', cvRoutes)
 
 //server start
 app.listen(PORT, () =>{
