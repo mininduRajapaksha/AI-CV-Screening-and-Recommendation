@@ -18,10 +18,10 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: "#EFF6FF" }}>
+    <div className="flex min-h-screen bg-[#1E2A4A]">
       <AdminSidebar onLogout={handleLogout} />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 rounded-l-3xl">
         <Navbar user={mockAdmin} />
 
         <main className="flex-1 p-8">
