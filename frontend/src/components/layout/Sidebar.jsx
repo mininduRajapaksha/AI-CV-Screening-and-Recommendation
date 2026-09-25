@@ -47,10 +47,10 @@ export default function Sidebar() {
               to={to}
               end={to === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium transition-all duration-200 ${
+                `flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium transition-all duration-300 ${
                   isActive
                     ? 'text-white bg-[#2E3D68]'
-                    : 'text-[#B8C4D8] hover:bg-white/[0.06] hover:text-white'
+                    : 'text-[#B8C4D8] hover:bg-white/[0.06] hover:text-white hover:translate-x-0.5'
                 }`
               }
             >

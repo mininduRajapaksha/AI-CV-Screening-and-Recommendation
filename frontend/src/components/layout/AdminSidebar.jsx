@@ -18,10 +18,10 @@ const navLinks = [
 
 export default function AdminSidebar({ onLogout }) {
   const linkClasses = ({ isActive }) =>
-    `flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium transition-colors ${
+    `flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium transition-all duration-300 ${
       isActive
         ? "text-white bg-[#2E3D68]"
-        : "text-[#B8C4D8] hover:bg-white/[0.06] hover:text-white"
+        : "text-[#B8C4D8] hover:bg-white/[0.06] hover:text-white hover:translate-x-0.5"
     }`;
 
   return (
@@ -36,7 +36,7 @@ export default function AdminSidebar({ onLogout }) {
           />
 
           <p className="mt-1 text-base font-semibold text-white">
-            CVision <span className="text-[#6D8EF5]">AI</span>
+            CVision <span className="text-[#6A54E6]">AI</span>
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export default function AdminSidebar({ onLogout }) {
 
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-red-400 hover:bg-red-500/10 cursor-pointer transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-red-400 hover:bg-red-500/10 cursor-pointer transition-all duration-200"
         >
           <LogOut size={19} strokeWidth={1.75} />
           Logout
