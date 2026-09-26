@@ -226,7 +226,7 @@ export default function CVUpload() {
       </div>
 
       {/*Job posting select*/}
-      <div className="mx-auto mb-6 w-[calc(100%-140px)] rounded-[14px] border border-slate-200 bg-white px-11 py-7">
+      <div className="mx-auto mb-6 w-[calc(100%-140px)] rounded-[14px] border border-slate-200 bg-white px-11 py-7 shadow-sm">
         <label htmlFor="job-posting" className="mb-3 block text-sm font-medium text-slate-900">Job posting</label>
 
         <div className="relative">
@@ -262,6 +262,7 @@ export default function CVUpload() {
             ? "border-blue-600 bg-blue-50"
             : "border-slate-500 bg-white"
         }`}
+        
       >
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-500">
           <UploadCloud size={36} />
@@ -295,12 +296,12 @@ export default function CVUpload() {
 
       {/*File List*/}
       {files.length > 0 && (
-        <div className="mx-auto w-[calc(100%-140px)] overflow-hidden rounded-[14px] border border-slate-200 bg-white">
+        <div className="mx-auto w-[calc(100%-140px)] overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-sm">
           {/*file list header*/}
           <div className="flex h-[53px] items-center justify-between border-b border-slate-200 px-7 text-[13px] font-medium text-slate-900">
             <span>
               {files.length}{""}
-              {files.length === 1 ? "file" : "files"} selected
+              {files.length === 1 ? " file" : " files"} selected
             </span>
 
             <span>
