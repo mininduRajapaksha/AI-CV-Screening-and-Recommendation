@@ -1,4 +1,4 @@
-import { use, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Users,
   UserCheck,
@@ -14,6 +14,7 @@ import {
   ChevronRight,
   AlertTriangle,
 } from "lucide-react";
+
 
 const initialUsers = [
   {
@@ -259,7 +260,9 @@ function UserManagement() {
           value={totalUsers}
           description="Registered users"
           icon={Users}
-          iconColor="text-[#19295F]"
+          iconBg="#EEF2FF"
+          iconColor="text-[#4338CA]"
+          valueColor="text-[#4338CA]"
         />
 
         {/* ACTIVE USERS */}
@@ -269,6 +272,7 @@ function UserManagement() {
           value={activeUsers}
           description="Currently active"
           icon={UserCheck}
+          iconBg="#ECFDF5"
           iconColor="text-green-600"
           valueColor="text-green-600"
         />
@@ -280,6 +284,7 @@ function UserManagement() {
           value={inactiveUsers}
           description="Currently inactive"
           icon={UserX}
+          iconBg="#FEF2F2"
           iconColor="text-red-500"
           valueColor="text-red-500"
         />
@@ -291,7 +296,9 @@ function UserManagement() {
           value={adminUsers}
           description="System administrator"
           icon={ShieldCheck}
+          iconBg="#F5F3FF"
           iconColor="text-[#19295F]"
+          valueColor="text-[#19295F]"
         />
 
       </div>
@@ -314,7 +321,7 @@ function UserManagement() {
             value={searchTerm}
             onChange={handleSearch}
             placeholder="Search by name or email"
-            className="h-[50px] w-full rounded-lg border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500"
+            className="h-[45px] w-full rounded-lg border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 shadow-sm"
           />
 
         </div>
@@ -326,7 +333,7 @@ function UserManagement() {
           <select
             value={statusFilter}
             onChange={handleStatusFilter}
-            className="h-[50px] w-[134px] appearance-none rounded-lg border border-slate-200 bg-white px-4 pr-9 text-sm text-slate-900 outline-none focus:border-blue-500"
+            className="h-[45px] w-[134px] appearance-none rounded-lg border border-slate-200 bg-white px-4 pr-9 text-sm text-slate-900 outline-none focus:border-blue-500 shadow-sm"
           >
             <option value="All">Status</option>
             <option value="Active">Active</option>
@@ -344,7 +351,7 @@ function UserManagement() {
 
       {/* users table */}
 
-      <div className="overflow-visible rounded-[14px] border border-slate-200 bg-white">
+      <div className="overflow-visible rounded-[14px] border border-slate-200 bg-white shadow-sm">
 
         <div className="overflow-x-auto">
 
@@ -767,17 +774,20 @@ function StatCard({
   description,
   icon: Icon,
   iconColor,
+  iconBg,
   valueColor = "text-[#19295F]",
 }) {
   return (
-    <div className="h-[132px] rounded-[14px] border border-slate-200 bg-white px-5 py-4">
+    <div className="flex h-[140px] flex-col justify-between rounded-[14px] bg-white px-5 py-4 shadow-sm">
 
       <div className="flex items-center gap-2">
 
-        <Icon
-          size={22}
-          className={iconColor}
-        />
+        <div className="flex p-2 items-center justify-center rounded-xl" style={{ backgroundColor: iconBg }}>
+          <Icon
+            size={20}
+            className={iconColor}
+          />
+        </div>
 
         <span className="text-sm text-slate-700">
           {title}
@@ -785,13 +795,11 @@ function StatCard({
 
       </div>
 
-      <div
-        className={`mt-5 text-[20px] font-medium ${valueColor}`}
-      >
+      <span className={`ml-12 text-[20px] font-medium ${valueColor}`}>
         {value}
-      </div>
+      </span>
 
-      <p className="mt-4 text-xs text-slate-900">
+      <p className="text-xs text-slate-400">
         {description}
       </p>
 
