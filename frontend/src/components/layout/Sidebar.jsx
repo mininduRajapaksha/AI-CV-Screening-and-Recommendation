@@ -1,10 +1,10 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
-  Briefcase,
-  Upload,
+  BriefcaseBusiness,
+  CloudUpload,
   Users,
-  BarChart3,
+  ChartLine,
   User,
   LogOut
 } from 'lucide-react'
@@ -13,10 +13,10 @@ import logo from '../../assets/Logo.png'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/jobs', label: 'Jobs Postings', icon: Briefcase },
-  { to: '/cv-upload', label: 'CV Upload', icon: Upload },
+  { to: '/jobs', label: 'Jobs Postings', icon: BriefcaseBusiness },
+  { to: '/cv-upload', label: 'CV Upload', icon: CloudUpload},
   { to: '/candidates', label: 'Candidates', icon: Users },
-  { to: '/reports', label: 'Reports', icon: BarChart3 }
+  { to: '/reports', label: 'Reports', icon: ChartLine }
 ]
 
 export default function Sidebar() {
