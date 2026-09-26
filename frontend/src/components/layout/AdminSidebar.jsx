@@ -40,6 +40,8 @@ export default function AdminSidebar({ onLogout }) {
           </p>
         </div>
 
+        <div className='border-t border-white/10 mx-4 mb-4'/>
+        
         {/* Nav links */}
         <nav className="px-4 space-y-1.5 mt-2">
           {navLinks.map(({ label, icon: Icon, to }) => (

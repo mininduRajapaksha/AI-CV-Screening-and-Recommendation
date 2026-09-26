@@ -38,8 +38,8 @@ export default function Sidebar() {
             CVision <span className="text-[#6D8EF5]">AI</span>
           </p>
         </div>
-
-        {/* Navigation */}
+        <div className='border-t border-white/10 mx-4 mb-4'/>
+          {/* Navigation */}
         <nav className="px-4 space-y-1.5 mt-2">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
