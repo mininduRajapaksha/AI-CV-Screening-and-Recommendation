@@ -1,10 +1,10 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
-  Briefcase,
-  Upload,
+  BriefcaseBusiness,
+  CloudUpload,
   Users,
-  BarChart3,
+  ChartLine,
   User,
   LogOut
 } from 'lucide-react'
@@ -13,10 +13,10 @@ import logo from '../../assets/Logo.png'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/jobs', label: 'Jobs Postings', icon: Briefcase },
-  { to: '/cv-upload', label: 'CV Upload', icon: Upload },
+  { to: '/jobs', label: 'Jobs Postings', icon: BriefcaseBusiness },
+  { to: '/cv-upload', label: 'CV Upload', icon: CloudUpload},
   { to: '/candidates', label: 'Candidates', icon: Users },
-  { to: '/reports', label: 'Reports', icon: BarChart3 }
+  { to: '/reports', label: 'Reports', icon: ChartLine }
 ]
 
 export default function Sidebar() {
@@ -38,8 +38,8 @@ export default function Sidebar() {
             CVision <span className="text-[#6D8EF5]">AI</span>
           </p>
         </div>
-
-        {/* Navigation */}
+        <div className='border-t border-white/10 mx-4 mb-4'/>
+          {/* Navigation */}
         <nav className="px-4 space-y-1.5 mt-2">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
@@ -47,10 +47,10 @@ export default function Sidebar() {
               to={to}
               end={to === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium transition-all duration-200 ${
+                `flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium transition-all duration-300 ${
                   isActive
                     ? 'text-white bg-[#2E3D68]'
-                    : 'text-[#B8C4D8] hover:bg-white/[0.06] hover:text-white'
+                    : 'text-[#B8C4D8] hover:bg-white/[0.06] hover:text-white hover:translate-x-0.5'
                 }`
               }
             >
