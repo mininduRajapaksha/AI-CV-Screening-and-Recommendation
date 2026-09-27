@@ -279,7 +279,7 @@ export default function CVUpload() {
         <button
           type="button"
           onClick={handleBrowse}
-          className="h-[38px] rounded-lg bg-[#19295F] px-6 text-[13px] font-medium text-white transition hover:bg-blue-900"
+          className="h-[38px] rounded-lg cursor-pointer bg-[#19295F] px-6 text-[13px] font-medium text-white transition hover:bg-blue-900"
         >
           Browse Files
         </button>

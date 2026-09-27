@@ -11,10 +11,30 @@ const databaseMetrics = [
     value: "Connected",
     icon: CheckCircle2,
     valueClass: "text-emerald-600",
+    iconBg: "#ECFDF5",
+    iconColor: "text-emerald-600",
   },
-  { label: "Response time", value: "42 ms", icon: Clock3 },
-  { label: "Storage used", value: "10 MB / 512 MB", icon: HardDrive },
-  { label: "Active connections", value: "6 / 100", icon: Activity },
+  {
+    label: "Response time",
+    value: "42 ms",
+    icon: Clock3,
+    iconBg: "#EEF2FF",
+    iconColor: "text-[#4338CA]",
+  },
+  {
+    label: "Storage used",
+    value: "10 MB / 512 MB",
+    icon: HardDrive,
+    iconBg: "#F5F3FF",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Active connections",
+    value: "6 / 100",
+    icon: Activity,
+    iconBg: "#EFF6FF",
+    iconColor: "text-[#3B82F6]",
+  },
 ];
 
 const collections = [
@@ -28,7 +48,7 @@ export default function DatabaseStatus() {
   return (
     <div className="w-full pb-8 text-slate-950">
         {/*Header*/}
-      <div className="mb-14">
+      <div className="mb-8">
         <h1 className="text-[28px] font-semibold leading-9">Database status</h1>
         <p className="mt-1 text-sm text-slate-500">
           Monitor database connection and performance
@@ -37,13 +57,18 @@ export default function DatabaseStatus() {
 
         {/*Status cards*/}
       <section className="mb-9 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {databaseMetrics.map(({ label, value, icon: Icon, valueClass = "text-slate-950" }) => (
+        {databaseMetrics.map(({ label, value, icon: Icon, valueClass = "text-slate-950", iconBg, iconColor }) => (
           <article
             key={label}
-            className="h-[127px] rounded-[14px] border border-slate-200 bg-white px-[18px] py-[17px]"
+            className="h-[127px] rounded-[14px] bg-white px-[18px] py-[17px] shadow-sm"
           >
             <div className="flex items-center gap-2.5 text-sm text-slate-900">
-              <Icon size={19} strokeWidth={2} />
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-lg"
+                style={{ backgroundColor: iconBg }}
+              >
+                <Icon size={17} strokeWidth={2} className={iconColor} />
+              </div>
               <span>{label}</span>
             </div>
             <p className={`mt-8 text-xl font-medium ${valueClass}`}>{value}</p>
@@ -52,7 +77,7 @@ export default function DatabaseStatus() {
       </section>
 
         {/*DB Connection details*/}
-      <section className="mb-8 rounded-[14px] border border-slate-200 bg-white px-9 py-6">
+      <section className="mb-8 rounded-[14px] bg-white px-9 py-6 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-base font-medium">Connection details</h2>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-600">
@@ -70,7 +95,7 @@ export default function DatabaseStatus() {
       </section>
 
         {/*Database collections*/}
-      <section className="rounded-[14px] border border-slate-200 bg-white px-9 py-7">
+      <section className="rounded-[14px] bg-white px-9 py-7 shadow-sm">
         <h2 className="text-base font-medium">Collections</h2>
         <div className="mt-6 overflow-x-auto">
           <table className="w-full min-w-[520px] border-collapse text-sm">
