@@ -156,11 +156,11 @@ export default function Candidates() {
   if (selectedCandidate) {
     const styles = getStatusStyles(selectedCandidate.aiRecommendation);
     
-    // UI Fallbacks for detailed data missing from the current backend API response
-    const matchedSkills = selectedCandidate.matchedSkills || ["React", "Node.js", "MongoDB"];
-    const missingSkills = selectedCandidate.missingSkills || ["Docker", "Kubernetes"];
-    const experience = selectedCandidate.experience || [{ title: "Software Engineer", duration: "2 Years", company: "Tech Solutions" }];
-    const education = selectedCandidate.education || [{ degree: "BSc Computer Science", institution: "UCSC - 2023" }];
+    // Using real data extracted from the AI microservice and MongoDB, removing UI fallbacks
+    const matchedSkills = selectedCandidate.matchedSkills?.length > 0 ? selectedCandidate.matchedSkills : [];
+    const missingSkills = selectedCandidate.missingSkills?.length > 0 ? selectedCandidate.missingSkills : [];
+    const experience = selectedCandidate.experience?.length > 0 ? selectedCandidate.experience : [];
+    const education = selectedCandidate.education?.length > 0 ? selectedCandidate.education : [];
 
     return (
       <div className="w-full text-slate-800">
@@ -227,9 +227,9 @@ export default function Candidates() {
                   <CheckCircle size={14} className="text-green-600" /> Matched Skills
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {matchedSkills.map((skill, i) => (
+                  {matchedSkills.length > 0 ? matchedSkills.map((skill, i) => (
                     <span key={i} className="px-4 py-1.5 bg-[#e0e7ff] text-[#4338ca] rounded-md text-xs font-semibold">{skill}</span>
-                  ))}
+                  )) : <span className="text-slate-500 text-xs">No matched skills recorded.</span>}
                 </div>
               </div>
 
@@ -238,9 +238,9 @@ export default function Candidates() {
                   <AlertCircle size={14} className="text-red-500" /> Missing Skills
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {missingSkills.map((skill, i) => (
+                  {missingSkills.length > 0 ? missingSkills.map((skill, i) => (
                     <span key={i} className="px-4 py-1.5 bg-[#ffe4e6] text-[#e11d48] rounded-md text-xs font-semibold">{skill}</span>
-                  ))}
+                  )) : <span className="text-slate-500 text-xs">No missing skills recorded.</span>}
                 </div>
               </div>
             </div>
@@ -248,7 +248,7 @@ export default function Candidates() {
             <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
               <h3 className="text-sm font-bold mb-5">Experience & Education</h3>
               <div className="space-y-5 text-xs">
-                {experience.map((exp, i) => (
+                {experience.length > 0 ? experience.map((exp, i) => (
                   <div key={i} className="flex items-start gap-4">
                     <div className="w-2 h-2 mt-1.5 rounded-full bg-[#4a638b] shrink-0"></div>
                     <div>
@@ -256,8 +256,9 @@ export default function Candidates() {
                       <p className="text-slate-500 mt-1">{exp.duration} - {exp.company}</p>
                     </div>
                   </div>
-                ))}
-                {education.map((edu, i) => (
+                )) : <p className="text-slate-500">No experience details available.</p>}
+                
+                {education.length > 0 ? education.map((edu, i) => (
                   <div key={i} className="flex items-start gap-4">
                     <div className="w-2 h-2 mt-1.5 rounded-full bg-[#4a638b] shrink-0"></div>
                     <div>
@@ -265,7 +266,7 @@ export default function Candidates() {
                       <p className="text-slate-500 mt-1">{edu.institution}</p>
                     </div>
                   </div>
-                ))}
+                )) : <p className="text-slate-500">No education details available.</p>}
               </div>
             </div>
           </div>

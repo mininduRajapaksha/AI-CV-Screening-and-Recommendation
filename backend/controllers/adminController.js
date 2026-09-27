@@ -1,4 +1,6 @@
 const os = require('os');
+const fs = require('fs');
+const path = require('path');
 
 const getSystemStatus = (req, res) => {
     try {
@@ -45,12 +47,34 @@ const updateApiConfig = (req, res) => {
             return res.status(400).json({ error: "API Key is required" });
         }
         
-        // [SRS SEC-2 Compliance]: Key is handled securely. In production, 
-        // this is written to an encrypted database or .env file.
-        console.log(`Securely updating ${provider} API configuration...`);
+        // Determine the environment variable name based on the provider
+        const envVarName = provider.toLowerCase() === 'gemini' ? 'GEMINI_API_KEY' : 'OPENAI_API_KEY';
         
-        res.status(200).json({ message: "API Configuration updated successfully" });
+        // Find the absolute path to the .env file in the backend root directory
+        const envPath = path.resolve(__dirname, '../.env');
+        
+        let envContent = '';
+        if (fs.existsSync(envPath)) {
+            envContent = fs.readFileSync(envPath, 'utf8');
+        }
+
+        // Regex to match existing key and update it, or append if it doesn't exist
+        const regex = new RegExp(`^${envVarName}=.*`, 'm');
+        
+        if (envContent.match(regex)) {
+            envContent = envContent.replace(regex, `${envVarName}="${apiKey}"`);
+        } else {
+            envContent += `\n${envVarName}="${apiKey}"\n`;
+        }
+
+        // Write the updated content back to the .env file securely [SRS SEC-2]
+        fs.writeFileSync(envPath, envContent.trim() + '\n');
+        
+        console.log(`Securely updated ${provider} API configuration in .env file.`);
+        
+        res.status(200).json({ message: "API Configuration updated successfully in .env" });
     } catch (error) {
+        console.error("Failed to write to .env file:", error);
         res.status(500).json({ error: "Failed to update API configuration" });
     }
 };

@@ -54,7 +54,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   
   // States to store both statistics and the recent candidates list fetched from the backend
-  const [stats, setStats] = useState({ totalJobs: 0, totalCandidates: 0, processingCount: 0 });
+  const [stats, setStats] = useState({ totalJobs: 0, totalCandidates: 0, shortlistedCount: 0, processingCount: 0 });
   const [recentCandidates, setRecentCandidates] = useState([]);
 
   // Fetch dashboard data on component mount
@@ -117,9 +117,9 @@ export default function Dashboard() {
             <div className="p-2 bg-indigo-50 rounded-md"><Star size={16} className="text-indigo-600" /></div>
           </div>
           <div className="mt-4">
-            {/* Hardcoded for now as Dashboard API lacks shortlisted count calculation */}
-            <h2 className="text-3xl font-bold">42</h2>
-            <p className="text-xs text-slate-400 mt-1">12% of total</p>
+            {/* Dynamically displaying the shortlisted count fetched from the backend API */}
+            <h2 className="text-3xl font-bold">{stats.shortlistedCount || 0}</h2>
+            <p className="text-xs text-slate-400 mt-1">AI Recommended</p>
           </div>
         </div>
       </div>

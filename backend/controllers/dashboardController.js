@@ -1,12 +1,24 @@
+// Import the Candidate model to interact with the MongoDB database
+const Candidate = require('../models/Candidate');
+
 // Get Statistics for Dashboard Cards
 exports.getDashboardStats = async (req, res) => {
     try {
+        // Fetch real total candidates count from the database
+        const totalCandidatesCount = await Candidate.countDocuments();
+        
+        // Fetch shortlisted candidates count (Filtering 'Highly Recommended' and 'Recommended')
+        const shortlistedCount = await Candidate.countDocuments({
+            aiRecommendation: { $in: ["Highly Recommended", "Recommended"] }
+        });
+
         res.status(200).json({
             success: true,
             data: {
-                totalJobs: 12,
-                totalCandidates: 45,
-                processingCount: 3
+                totalJobs: 12, // Keeping this hardcoded until Job models are implemented by the team
+                totalCandidates: totalCandidatesCount, // Dynamically fetched real data
+                shortlistedCount: shortlistedCount,    // Dynamically fetched real data
+                processingCount: 0
             }
         });
     } catch (error) {
