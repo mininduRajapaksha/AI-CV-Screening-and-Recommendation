@@ -3,10 +3,12 @@ require("dotenv").config()
 const { Worker } = require("bullmq")
 const connectDB = require("../config/db")
 const CV = require("../models/CV")
+const Screening = require("../models/Screening")
+const { processCV } = require("../services/aiService")
 
 const startWorker = async () => {
 
-    // Connect to MongoDB first
+    // Connect to MongoDB
     await connectDB()
 
     console.log("MongoDB connection ready for worker")
@@ -17,7 +19,11 @@ const startWorker = async () => {
 
             console.log(`Processing CV job: ${job.id}`)
 
-            const { cvId } = job.data
+            const { cvId, screeningId, jobId } = job.data
+
+            console.log(`CV ID: ${cvId}`)
+            console.log(`Screening ID: ${screeningId}`)
+            console.log(`Job ID: ${jobId}`)
 
             const cv = await CV.findById(cvId)
 
@@ -25,19 +31,62 @@ const startWorker = async () => {
                 throw new Error("CV record not found")
             }
 
+            const screening = await Screening.findById(screeningId)
+
+            if (!screening) {
+                throw new Error("Screening record not found")
+            }
+
+            // Mark CV as processing
             cv.status = "processing"
             await cv.save()
 
             console.log(`CV ${cv.originalName} is processing...`)
 
-            // AI processing will be added later
-            await new Promise((resolve) => setTimeout(resolve, 3000))
+            // Temporary Job Description
+            const jobDescription = `
+            We are looking for a Frontend Developer.
 
+            Requirements:
+            - React
+            - JavaScript
+            - HTML
+            - CSS
+            - REST APIs
+            - Git
+            - Good problem-solving skills
+            `
+
+
+            // Send CV to FastAPI
+            console.log(`Sending ${cv.originalName} to AI service...`)
+
+            const aiResponse = await processCV(
+                cv.filePath,
+                jobDescription
+            )
+
+            console.log("AI service response:")
+            console.log(aiResponse)
+
+            // Mark CV as complete
             cv.status = "complete"
             cv.errorMessage = null
             await cv.save()
 
+            // Update screening progress
+            screening.completedCVs += 1
+
+            if (screening.completedCVs === screening.totalCVs) {
+                screening.status = "complete"
+            }
+
+            await screening.save()
+
             console.log(`CV ${cv.originalName} completed`)
+            console.log(
+                `Screening progress: ${screening.completedCVs}/${screening.totalCVs}`
+            )
         },
         {
             connection: {
