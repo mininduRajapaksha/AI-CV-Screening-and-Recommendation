@@ -5,6 +5,7 @@ require("dotenv").config()
 
 const connectDB = require("./config/db")
 const cvRoutes = require("./routes/cvRoutes")
+const screeningRoutes = require("./routes/screeningRoutes")
 
 const app = express()
 
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }))
 connectDB()
 
 app.use('/api/cvs', cvRoutes)
+app.use('/api/screening', screeningRoutes)
 
 //server start
 app.listen(PORT, () =>{
