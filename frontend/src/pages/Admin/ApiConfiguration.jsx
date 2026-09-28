@@ -1,9 +1,35 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Circle, Bot, Sparkles, ChevronDown } from 'lucide-react';
+import axios from 'axios';
+import { Eye, EyeOff, Circle, ChevronDown, Cpu } from 'lucide-react';
 
 export default function ApiConfiguration() {
   const [showOpenAIKey, setShowOpenAIKey] = useState(false);
   const [showGeminiKey, setShowGeminiKey] = useState(false);
+  
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [isGeminiConnected, setIsGeminiConnected] = useState(false);
+
+  const handleSaveGeminiConfig = async () => {
+    if (!geminiApiKey) {
+      alert("Please enter a valid API Key first.");
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/admin/config', {
+        apiKey: geminiApiKey,
+        provider: 'gemini'
+      });
+      
+      if (response.status === 200) {
+        alert(response.data.message);
+        setIsGeminiConnected(true);
+      }
+    } catch (error) {
+      console.error("Failed to save configuration:", error);
+      alert(error.response?.data?.error || "Failed to update API configuration");
+    }
+  };
 
   return (
     <div className="w-full text-slate-800">
@@ -15,19 +41,18 @@ export default function ApiConfiguration() {
 
       <div className="space-y-6 max-w-4xl">
         
-        {/* OpenAI API Settings Card */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-slate-100 rounded-lg text-slate-700">
-                <Bot size={24} />
+              <div className="w-12 h-12 min-w-[48px] min-h-[48px] shrink-0 bg-slate-100 rounded-lg text-slate-800 flex items-center justify-center">
+                <Cpu size={24} />
               </div>
               <div>
                 <h2 className="font-bold text-base">OpenAI API Settings</h2>
                 <p className="text-xs text-slate-500">GPT-4o, GPT-4 Turbo, and more</p>
               </div>
             </div>
-            <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold">
+            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-300 text-green-600 rounded-md text-xs font-semibold">
               <Circle size={8} fill="currentColor" className="text-green-500" /> Connected
             </span>
           </div>
@@ -66,30 +91,32 @@ export default function ApiConfiguration() {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button className="px-5 py-2 border border-slate-300 bg-white hover:bg-slate-50 rounded-lg text-sm font-medium text-slate-700 transition-colors cursor-pointer">
+              <button className="px-5 py-2 border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 rounded-lg text-sm font-medium text-slate-700 transition-all cursor-pointer">
                 Test Connection
               </button>
-              <button className="px-5 py-2 bg-indigo-950 hover:bg-indigo-900 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
+              <button className="px-5 py-2 bg-[#1e293b] hover:bg-slate-800 active:scale-95 text-white rounded-lg text-sm font-medium transition-all cursor-pointer">
                 Save Configuration
               </button>
             </div>
           </div>
         </div>
 
-        {/* Google Gemini API Settings Card */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-slate-100 rounded-lg text-slate-700">
-                <Sparkles size={24} />
+                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center">
+                   <div className="w-2 h-2 rounded-full bg-white"></div>
+                </div>
               </div>
               <div>
                 <h2 className="font-bold text-base">Google Gemini API Settings</h2>
                 <p className="text-xs text-slate-500">Gemini 1.5 Pro, Gemini Flash, and more</p>
               </div>
             </div>
-            <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-semibold">
-              <Circle size={8} fill="currentColor" className="text-slate-400" /> Not Configured
+            <span className={`flex items-center gap-1.5 px-2.5 py-1 ${isGeminiConnected ? 'bg-green-50 border-green-300 text-green-600' : 'bg-red-50 border-red-300 text-red-500'} border rounded-md text-xs font-semibold`}>
+              <Circle size={8} fill="currentColor" className={isGeminiConnected ? 'text-green-500' : 'text-red-500'} /> 
+              {isGeminiConnected ? 'Connected' : 'Not Configured'}
             </span>
           </div>
 
@@ -99,6 +126,8 @@ export default function ApiConfiguration() {
               <div className="relative">
                 <input 
                   type={showGeminiKey ? "text" : "password"} 
+                  value={geminiApiKey}
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
                   placeholder="Enter Your Google AI API Key"
                   className="w-full pl-4 pr-10 py-2.5 bg-slate-100 border-none rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-indigo-900 focus:outline-none"
                 />
@@ -127,10 +156,13 @@ export default function ApiConfiguration() {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button className="px-5 py-2 border border-slate-300 bg-white hover:bg-slate-50 rounded-lg text-sm font-medium text-slate-700 transition-colors cursor-pointer">
+              <button className="px-5 py-2 border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 rounded-lg text-sm font-medium text-slate-700 transition-all cursor-pointer">
                 Test Connection
               </button>
-              <button className="px-5 py-2 bg-indigo-950 hover:bg-indigo-900 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
+              <button 
+                onClick={handleSaveGeminiConfig}
+                className="px-5 py-2 bg-[#1e293b] hover:bg-slate-800 active:scale-95 text-white rounded-lg text-sm font-medium transition-all cursor-pointer"
+              >
                 Save Configuration
               </button>
             </div>

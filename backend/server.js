@@ -16,6 +16,15 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+// Routes
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const candidateRoutes = require("./routes/candidateRoutes"); 
+const adminRoutes = require("./routes/adminRoutes"); 
+
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/candidates", candidateRoutes); 
+app.use("/api/admin", adminRoutes); 
+
 //Database connection
 connectDB()
 
