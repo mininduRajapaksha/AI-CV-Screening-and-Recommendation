@@ -1,8 +1,8 @@
 const CV = require("../models/CV")
-const cvQueue = require("../queues/cvQueue")
 
 const singleCV = async (req, res, next) => {
     try {
+
         if (!req.file) {
             return res.status(400).json({
                 success: false,
@@ -10,29 +10,19 @@ const singleCV = async (req, res, next) => {
             })
         }
 
-        // Save CV information in MongoDB
         const cv = await CV.create({
             originalName: req.file.originalname,
             fileName: req.file.filename,
             filePath: req.file.path,
             fileSize: req.file.size,
-            fileType: req.file.mimetype
-        })
-
-        // Add CV processing job to BullMQ
-        const job = await cvQueue.add("process-cv", {
-            cvId: cv._id.toString()
+            fileType: req.file.mimetype,
+            status: "pending"
         })
 
         res.status(201).json({
             success: true,
-            message: "CV uploaded and added to processing queue",
-            cv: {
-                id: cv._id,
-                originalName: cv.originalName,
-                status: cv.status
-            },
-            jobId: job.id
+            message: "CV uploaded successfully",
+            cv
         })
 
     } catch (error) {
@@ -43,6 +33,7 @@ const singleCV = async (req, res, next) => {
 
 const multipleCVs = async (req, res, next) => {
     try {
+
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({
                 success: false,
@@ -50,35 +41,20 @@ const multipleCVs = async (req, res, next) => {
             })
         }
 
-        const cvs = []
+        const cvData = req.files.map((file) => ({
+            originalName: file.originalname,
+            fileName: file.filename,
+            filePath: file.path,
+            fileSize: file.size,
+            fileType: file.mimetype,
+            status: "pending"
+        }))
 
-        for (const file of req.files) {
-
-            // Save each CV to MongoDB
-            const cv = await CV.create({
-                originalName: file.originalname,
-                fileName: file.filename,
-                filePath: file.path,
-                fileSize: file.size,
-                fileType: file.mimetype
-            })
-
-            // Add each CV to BullMQ
-            const job = await cvQueue.add("process-cv", {
-                cvId: cv._id.toString()
-            })
-
-            cvs.push({
-                id: cv._id,
-                originalName: cv.originalName,
-                status: cv.status,
-                jobId: job.id
-            })
-        }
+        const cvs = await CV.insertMany(cvData)
 
         res.status(201).json({
             success: true,
-            message: `${cvs.length} CV(s) uploaded and added to processing queue`,
+            message: `${cvs.length} CV(s) uploaded successfully`,
             cvs
         })
 
