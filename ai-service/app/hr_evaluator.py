@@ -115,7 +115,7 @@ Job Description:
 
         url = (
             "https://generativelanguage.googleapis.com/"
-            "v1beta/models/gemini-3.8-flash:generateContent"
+            "v1beta/models/gemini-3.5-flash:generateContent"
         )
 
         print("Connecting to Gemini for HR evaluation...")

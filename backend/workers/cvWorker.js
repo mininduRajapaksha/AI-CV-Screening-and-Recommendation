@@ -3,9 +3,11 @@ require("dotenv").config()
 const { Worker } = require("bullmq")
 
 const connectDB = require("../config/db")
+
 const CV = require("../models/CV")
 const Screening = require("../models/Screening")
 const Job = require("../models/Job")
+const Candidate = require("../models/Candidate")
 
 const { processCV } = require("../services/aiService")
 
@@ -60,7 +62,6 @@ const startWorker = async () => {
                 throw new Error("Job posting not found")
             }
 
-
             console.log(`Job found: ${jobPosting.title}`)
 
 
@@ -78,26 +79,28 @@ const startWorker = async () => {
             // ------------------------------------------------
 
             const jobDescription = `
-                Job Title: ${jobPosting.title}
+Job Title: ${jobPosting.title}
 
-                Department: ${jobPosting.department}
+Department: ${jobPosting.department}
 
-                Location: ${jobPosting.location}
+Location: ${jobPosting.location}
 
-                Employment Type: ${jobPosting.employmentType}
+Employment Type: ${jobPosting.employmentType}
 
-                Experience Level: ${jobPosting.experienceLevel}
+Experience Level: ${jobPosting.experienceLevel}
 
-                Salary Range: ${jobPosting.salaryRange || "Not specified"}
+Salary Range: ${jobPosting.salaryRange || "Not specified"}
 
-                Job Description:
-                ${jobPosting.description}
+Job Description:
+${jobPosting.description}
 
-                Required Skills:
-                ${jobPosting.skills && jobPosting.skills.length > 0
-                    ? jobPosting.skills.join(", ")
-                    : "Not specified"}
-                `
+Required Skills:
+${
+    jobPosting.skills && jobPosting.skills.length > 0
+        ? jobPosting.skills.join(", ")
+        : "Not specified"
+}
+`
 
 
             console.log("Job description prepared.")
@@ -109,6 +112,7 @@ const startWorker = async () => {
 
             console.log("Sending CV to AI service...")
 
+
             const aiResponse = await processCV(
                 cv.filePath,
                 jobDescription
@@ -116,7 +120,14 @@ const startWorker = async () => {
 
 
             console.log("AI Response:")
-            console.log(JSON.stringify(aiResponse, null, 2))
+
+            console.log(
+                JSON.stringify(
+                    aiResponse,
+                    null,
+                    2
+                )
+            )
 
 
             // ------------------------------------------------
@@ -134,17 +145,84 @@ const startWorker = async () => {
 
 
             // ------------------------------------------------
-            // 8. Mark CV as complete
+            // 8. Extract Agent 01 + Agent 02 results
+            // ------------------------------------------------
+
+            const candidateData = aiResponse.candidate
+            const evaluation = aiResponse.evaluation
+
+
+            if (!candidateData) {
+                throw new Error(
+                    "Candidate data missing from AI response"
+                )
+            }
+
+
+            if (!evaluation) {
+                throw new Error(
+                    "Evaluation data missing from AI response"
+                )
+            }
+
+
+            // ------------------------------------------------
+            // 9. Save Candidate to MongoDB
+            // ------------------------------------------------
+
+            const candidate = await Candidate.create({
+
+                jobId: jobId,
+
+                personalInfo: {
+                    name: candidateData.personalInfo?.name || "Unknown Candidate",
+
+                    email: candidateData.personalInfo?.email || "",
+
+                    phone: candidateData.personalInfo?.phone || ""
+                },
+
+                matchPercentage:
+                    evaluation.matchPercentage || 0,
+
+                // Agent 03 will update these later
+                aiRecommendation: "Pending",
+
+                justification: "Awaiting Agent 03 evaluation",
+
+                matchedSkills:
+                    evaluation.matchedSkills || [],
+
+                missingSkills:
+                    evaluation.missingSkills || [],
+
+                experience:
+                    candidateData.experience || [],
+
+                education:
+                    candidateData.education || []
+
+            })
+
+
+            console.log(
+                `Candidate saved successfully: ${candidate._id}`
+            )
+
+
+            // ------------------------------------------------
+            // 10. Mark CV as complete
             // ------------------------------------------------
 
             cv.status = "complete"
+
             cv.errorMessage = null
 
             await cv.save()
 
 
             // ------------------------------------------------
-            // 9. Update Screening progress
+            // 11. Update Screening progress
             // ------------------------------------------------
 
             screening.completedCVs += 1
@@ -163,13 +241,15 @@ const startWorker = async () => {
             await screening.save()
 
 
-            console.log(`CV ${cvId} processed successfully.`)
+            console.log(
+                `CV ${cvId} processed successfully.`
+            )
 
         },
 
 
         // ------------------------------------------------
-        // BullMQ Redis Connection
+        // BullMQ Redis connection
         // ------------------------------------------------
 
         {
@@ -185,7 +265,7 @@ const startWorker = async () => {
 
 
     // ------------------------------------------------
-    // Worker Events
+    // Worker events
     // ------------------------------------------------
 
     worker.on("completed", (job) => {
