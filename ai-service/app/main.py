@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.routes.processing import router as processing_router
+from app.routes.evaluator import router as evaluator_router
 
 
 app = FastAPI(
@@ -26,5 +27,10 @@ def health_check():
 
 app.include_router(
     processing_router,
+    prefix="/api/v1"
+)
+
+app.include_router(
+    evaluator_router,
     prefix="/api/v1"
 )
