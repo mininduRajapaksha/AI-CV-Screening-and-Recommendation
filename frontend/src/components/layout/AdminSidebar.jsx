@@ -18,28 +18,37 @@ const navLinks = [
 
 export default function AdminSidebar({ onLogout }) {
   const linkClasses = ({ isActive }) =>
-    `flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium transition-colors ${
-      isActive ? "text-white bg-[#172554]" : "text-slate-600 hover:bg-slate-50"
+    `flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium transition-all duration-300 ${
+      isActive
+        ? "text-white bg-[#2E3D68]"
+        : "text-[#B8C4D8] hover:bg-white/[0.06] hover:text-white hover:translate-x-0.5"
     }`;
 
   return (
-    <aside className="w-60 flex-shrink-0 flex flex-col justify-between h-screen bg-white border-r border-slate-200 sticky top-0">
+    <aside className="w-60 flex-shrink-0 flex flex-col justify-between h-screen bg-[#1E2A4A] sticky top-0">
       <div>
         {/* Logo */}
         <div className="flex flex-col items-center py-6">
-          <img src={logo} alt="CVision AI logo" className="w-18 h-18 object-contain" />
-          <p className="mt-1 text-base font-semibold text-slate-800">
-            CVision <span className="text-blue-600">AI</span>
+          <img
+            src={logo}
+            alt="CVision AI logo"
+            className="w-18 h-18 object-contain"
+          />
+
+          <p className="mt-1 text-base font-semibold text-white">
+            CVision <span className="text-[#6A54E6]">AI</span>
           </p>
         </div>
 
+        <div className='border-t border-white/10 mx-4 mb-4'/>
+        
         {/* Nav links */}
         <nav className="px-4 space-y-1.5 mt-2">
           {navLinks.map(({ label, icon: Icon, to }) => (
-            <NavLink 
-              key={label} 
-              to={to} 
-              end={to === "/admin"} 
+            <NavLink
+              key={label}
+              to={to}
+              end={to === "/admin"}
               className={linkClasses}
             >
               <Icon size={19} strokeWidth={1.75} />
@@ -51,14 +60,16 @@ export default function AdminSidebar({ onLogout }) {
 
       {/* Bottom section */}
       <div className="px-4 pb-6 space-y-1.5">
-        <div className="border-t border-slate-100 mb-3" />
+        <div className="border-t border-white/10 mb-3" />
+
         <NavLink to="/admin/profile" className={linkClasses}>
           <User size={19} strokeWidth={1.75} />
           Profile
         </NavLink>
+
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-red-500 hover:bg-red-50 cursor-pointer"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[15px] font-medium text-red-400 hover:bg-red-500/10 cursor-pointer transition-all duration-200"
         >
           <LogOut size={19} strokeWidth={1.75} />
           Logout
