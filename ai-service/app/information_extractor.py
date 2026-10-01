@@ -2,7 +2,7 @@ import os
 import json
 import requests
 from dotenv import load_dotenv
-from pdf_extractor import extract_text_from_pdf
+from app.pdf_extractor import extract_text_from_pdf
 
 # [SEC-2] Securely load API keys using environment variables (.env)
 load_dotenv()
