@@ -15,6 +15,10 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const cvRoutes = require("./routes/cvRoutes");
 const screeningRoutes = require("./routes/screeningRoutes");
+const adminDatabaseRoutes = require("./routes/adminDatabaseRoutes");
+const adminUserRoutes = require("./routes/adminUserRoutes");
+const profileRoutes = require("./routes/profileRoutes")
+const notificationRoutes = require("./routes/notificationRoutes")
 
 const app = express();
 
@@ -25,15 +29,32 @@ app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-// Use Routes
+// User Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/candidates", candidateRoutes);
-app.use("/api/reports", reportRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/admin", adminRoutes);
 app.use("/api/cvs", cvRoutes);
 app.use("/api/screening", screeningRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+
+//admin
+app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminDatabaseRoutes);
+app.use("/api/admin", adminUserRoutes);
+
+app.use("/api/profile", profileRoutes);
+app.use("/api/notifications", notificationRoutes);
+
+// Return JSON for route and validation failures so API clients never receive
+// Express's default HTML error page.
+app.use((error, req, res, next) => {
+  console.error(error);
+  res.status(error.status || 500).json({
+    success: false,
+    message: error.message || "Internal server error",
+  });
+});
 
 // Database Connection
 connectDB();

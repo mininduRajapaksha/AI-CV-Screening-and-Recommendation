@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthLayout from '../../components/auth/AuthLayout'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
@@ -21,13 +21,24 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(true)
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    login(email)
-    navigate('/')
+    setError('')
+    setIsSubmitting(true)
+    try {
+      const user = await login(email, password)
+      navigate(user.role === 'Admin' ? '/admin' : '/')
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleGoogleLogin = () => {
@@ -45,8 +56,10 @@ export default function Login() {
 
         <h1 className="text-2xl font-bold text-navy text-center">Welcome Back</h1>
         <p className="text-xs text-slate-500 text-center mt-1 mb-6">Access your recruitment and talent workspace</p>
+        {location.state?.message && <p role="status" className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-center text-xs text-emerald-700">{location.state.message}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
+          {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
           <Input label="Work Email Address" required type="email" placeholder="minindu.r@claritydental.com" value={email} onChange={e => setEmail(e.target.value)} />
           <Input label="Password" required withEye placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
 
@@ -58,7 +71,7 @@ export default function Login() {
             <Link to="/forgot-password" className="text-xs text-coral font-semibold hover:underline">Forgot Password?</Link>
           </div>
 
-          <Button type="submit" variant="navy" className="w-full">Sign In</Button>
+          <Button type="submit" disabled={isSubmitting} variant="navy" className="w-full bg-[#1E2A4A] hover:bg-[#172554] disabled:cursor-not-allowed disabled:opacity-70">{isSubmitting ? 'Signing in...' : 'Sign In'}</Button>
 
           <div className="relative text-center py-1">
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>

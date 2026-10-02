@@ -8,15 +8,25 @@ import logo from '../../assets/Logo.png'
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', role: 'HR Manager', agree: false })
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const { register } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (form.password !== form.confirm) return alert('Passwords do not match')
-    if (!form.agree) return alert('Please agree to the terms')
-    register(form)
-    navigate('/dashboard')
+    setError('')
+    if (form.password !== form.confirm) return setError('Passwords do not match.')
+    if (!form.agree) return setError('Please agree to the terms to continue.')
+    setIsSubmitting(true)
+    try {
+      await register(form)
+      navigate('/login', { state: { message: 'Account created. Please sign in.' } })
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -30,6 +40,7 @@ export default function Register() {
         <p className="text-xs text-slate-500 text-center mt-1 mb-6">Join TalentFlow to start managing active candidates</p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
+          {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
           <Input label="Full Name" required placeholder="e.g. Minindu Ratnayake" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
           <Input label="Work Email Address" required type="email" placeholder="name@company.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
 
@@ -52,7 +63,7 @@ export default function Register() {
             <span>I agree to TalentFlow's <span className="font-semibold text-navy">Terms of Service</span> and <span className="font-semibold text-navy">Privacy Policy</span></span>
           </label>
 
-          <Button type="submit" variant="navy" className="w-full">Create Account</Button>
+          <Button type="submit" disabled={isSubmitting} variant="navy" className="w-full bg-[#1E2A4A] hover:bg-[#172554] disabled:cursor-not-allowed disabled:opacity-70">{isSubmitting ? 'Creating account...' : 'Create Account'}</Button>
         </form>
 
         <p className="text-center text-xs text-gray-500 mt-3">
