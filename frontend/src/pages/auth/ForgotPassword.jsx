@@ -21,7 +21,7 @@ export default function ForgotPassword() {
 
         <form onSubmit={e => { e.preventDefault(); alert('Reset link sent to ' + email) }} className="space-y-3">
           <Input label="Work Email Address" required type="email" placeholder="e.g. minindu.r@claritydental.com" value={email} onChange={e => setEmail(e.target.value)} />
-          <Button type="submit" variant="navy" className="w-full">Send Reset Link</Button>
+          <Button type="submit" variant="navy" className="w-full bg-[#1E2A4A] hover:bg-[#172554]">Send Reset Link</Button>
         </form>
 
         <div className="text-center mt-4">
