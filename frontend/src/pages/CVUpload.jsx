@@ -12,11 +12,18 @@ import {
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_FILES = 50;
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api").replace(/\/$/, "");
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+).replace(/\/$/, "");
 
 function getAuthHeaders() {
   const token = localStorage.getItem("cvision_token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+
+  return token
+    ? {
+        Authorization: `Bearer ${token}`,
+      }
+    : {};
 }
 
 export default function CVUpload() {
@@ -39,6 +46,13 @@ export default function CVUpload() {
 
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isStartingScreening, setIsStartingScreening] = useState(false);
+
+  // -----------------------------
+  // Screening
+  // -----------------------------
+
+  const [screeningId, setScreeningId] = useState(null);
 
   // -----------------------------
   // Fetch jobs
@@ -56,8 +70,11 @@ export default function CVUpload() {
 
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error("Your session has expired. Please sign in again.");
+            throw new Error(
+              "Your session has expired. Please sign in again."
+            );
           }
+
           throw new Error("Failed to fetch job postings");
         }
 
@@ -123,7 +140,7 @@ export default function CVUpload() {
         name: file.name,
         size: file.size,
 
-        // 0 until real upload starts
+        // 0 until upload starts
         progress: 0,
 
         // ready = valid but not uploaded
@@ -134,7 +151,7 @@ export default function CVUpload() {
 
         error: error || null,
 
-        // MongoDB CV ID will be stored here
+        // MongoDB CV ID
         cvId: null,
       };
     });
@@ -182,6 +199,10 @@ export default function CVUpload() {
   // -----------------------------
 
   const removeFile = (fileId) => {
+    if (isUploading || isStartingScreening) {
+      return;
+    }
+
     setFiles((prevFiles) =>
       prevFiles.filter((file) => file.id !== fileId)
     );
@@ -192,11 +213,12 @@ export default function CVUpload() {
   // -----------------------------
 
   const clearAllFiles = () => {
-    if (isUploading) {
+    if (isUploading || isStartingScreening) {
       return;
     }
 
     setFiles([]);
+    setScreeningId(null);
   };
 
   // -----------------------------
@@ -255,6 +277,7 @@ export default function CVUpload() {
         `${API_BASE_URL}/cvs/upload-multiple/`,
         {
           method: "POST",
+          headers: getAuthHeaders(),
           body: formData,
         }
       );
@@ -310,7 +333,6 @@ export default function CVUpload() {
 
       console.log("CV upload successful:");
       console.log(data);
-
     } catch (error) {
       console.error("CV upload error:", error);
 
@@ -328,9 +350,73 @@ export default function CVUpload() {
       );
 
       alert(error.message);
-
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  // -----------------------------
+  // Start screening
+  // -----------------------------
+
+  const startScreening = async () => {
+    if (!selectedJob) {
+      alert("Please select a job posting.");
+      return;
+    }
+
+    const uploadedCVIds = files
+      .filter(
+        (file) =>
+          file.status === "uploaded" &&
+          file.cvId
+      )
+      .map((file) => file.cvId);
+
+    if (uploadedCVIds.length === 0) {
+      alert("Please upload at least one CV first.");
+      return;
+    }
+
+    try {
+      setIsStartingScreening(true);
+
+      const response = await fetch(
+        `${API_BASE_URL}/screening/start`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({
+            jobId: selectedJob,
+            cvIds: uploadedCVIds,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to start screening"
+        );
+      }
+
+      console.log("Screening started successfully:");
+      console.log(data);
+
+      setScreeningId(data.screeningId);
+
+      alert(
+        `Screening started for ${data.totalCVs} CV(s).`
+      );
+    } catch (error) {
+      console.error("Screening error:", error);
+      alert(error.message);
+    } finally {
+      setIsStartingScreening(false);
     }
   };
 
@@ -347,15 +433,27 @@ export default function CVUpload() {
   ).length;
 
   const readyCount = files.filter(
-    (file) =>
-      file.status === "ready" ||
-      file.status === "uploaded"
+    (file) => file.status === "ready"
   ).length;
+
+  // -----------------------------
+  // Button state
+  // -----------------------------
+
+  const hasUploadedFiles = uploadedCount > 0;
 
   const canUpload =
     files.length > 0 &&
     files.some((file) => file.status === "ready") &&
-    !isUploading;
+    !isUploading &&
+    !isStartingScreening;
+
+  const canStartScreening =
+    uploadedCount > 0 &&
+    readyCount === 0 &&
+    !isUploading &&
+    !isStartingScreening &&
+    !screeningId;
 
   // -----------------------------
   // Format file size
@@ -370,12 +468,16 @@ export default function CVUpload() {
   };
 
   // -----------------------------
-  // Selected job title
+  // Selected job
   // -----------------------------
 
   const selectedJobData = jobs.find(
     (job) => job._id === selectedJob
   );
+
+  // -----------------------------
+  // Main UI
+  // -----------------------------
 
   return (
     <div className="w-full pb-10">
@@ -390,13 +492,13 @@ export default function CVUpload() {
         </h1>
 
         <p className="mt-1 text-sm leading-5 text-slate-500">
-          Select a job posting, then upload candidate CVs for AI
-          screening.
+          Select a job posting, then upload candidate CVs
+          for AI screening.
         </p>
       </div>
 
       {/* -------------------------------- */}
-      {/* Job Posting Select */}
+      {/* Job Posting */}
       {/* -------------------------------- */}
 
       <div className="mx-auto mb-6 w-[calc(100%-140px)] rounded-[14px] border border-slate-200 bg-white px-11 py-7 shadow-sm">
@@ -416,7 +518,12 @@ export default function CVUpload() {
             onChange={(event) =>
               setSelectedJob(event.target.value)
             }
-            disabled={jobsLoading || isUploading}
+            disabled={
+              jobsLoading ||
+              isUploading ||
+              isStartingScreening ||
+              hasUploadedFiles
+            }
             className="h-10 w-full appearance-none rounded-lg border border-slate-900 bg-white px-4 pr-10 text-[13px] text-slate-900 outline-none focus:border-blue-600 disabled:bg-slate-100"
           >
 
@@ -441,6 +548,7 @@ export default function CVUpload() {
                   {job.title}
                 </option>
               ))}
+
           </select>
 
           <ChevronDown
@@ -459,7 +567,7 @@ export default function CVUpload() {
           </div>
         )}
 
-        {/* Selected job information */}
+        {/* Selected job */}
 
         {selectedJobData && (
           <div className="mt-3 text-xs text-slate-500">
@@ -502,8 +610,12 @@ export default function CVUpload() {
         <button
           type="button"
           onClick={handleBrowse}
-          disabled={isUploading}
-          className="h-[38px] rounded-lg cursor-pointer bg-[#19295F] px-6 text-[13px] font-medium text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:bg-slate-400"
+          disabled={
+            isUploading ||
+            isStartingScreening ||
+            !!screeningId
+          }
+          className="h-[38px] cursor-pointer rounded-lg bg-[#19295F] px-6 text-[13px] font-medium text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
           Browse Files
         </button>
@@ -655,12 +767,16 @@ export default function CVUpload() {
 
                 </div>
 
-                {/* Remove file */}
+                {/* Remove */}
 
                 <button
                   type="button"
                   onClick={() => removeFile(item.id)}
-                  disabled={isUploading}
+                  disabled={
+                    isUploading ||
+                    isStartingScreening ||
+                    !!screeningId
+                  }
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label={`Remove ${item.name}`}
                 >
@@ -681,7 +797,11 @@ export default function CVUpload() {
             <button
               type="button"
               onClick={clearAllFiles}
-              disabled={isUploading}
+              disabled={
+                isUploading ||
+                isStartingScreening ||
+                !!screeningId
+              }
               className="py-2 text-[13px] text-slate-500 transition hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Clear All Files
@@ -689,31 +809,55 @@ export default function CVUpload() {
 
             <div className="flex items-center gap-3">
 
+              {/* Failed count */}
+
               {failedCount > 0 && (
                 <span className="text-xs text-red-600">
                   {failedCount} failed
                 </span>
               )}
 
-              <button
-                type="button"
-                disabled={!canUpload}
-                onClick={uploadCVs}
-                className={`h-[38px] rounded-lg px-[18px] text-[13px] font-medium transition ${
-                  canUpload
-                    ? "bg-[#19295F] text-white hover:bg-blue-900"
-                    : "cursor-not-allowed bg-slate-300 text-slate-500"
-                }`}
-              >
-                {isUploading
-                  ? "Uploading..."
-                  : uploadedCount > 0 &&
-                      !files.some(
-                        (file) => file.status === "ready"
-                      )
-                    ? "Uploaded"
-                    : "Upload CVs"}
-              </button>
+              {/* Screening started */}
+
+              {screeningId && (
+                <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
+                  <CheckCircle size={16} />
+                  Screening Started
+                </span>
+              )}
+
+              {/* Main button */}
+
+              {!screeningId && (
+                <button
+                  type="button"
+                  disabled={
+                    canStartScreening
+                      ? false
+                      : !canUpload
+                  }
+                  onClick={
+                    canStartScreening
+                      ? startScreening
+                      : uploadCVs
+                  }
+                  className={`h-[38px] rounded-lg px-[18px] text-[13px] font-medium transition ${
+                    canStartScreening || canUpload
+                      ? "bg-[#19295F] text-white hover:bg-blue-900"
+                      : "cursor-not-allowed bg-slate-300 text-slate-500"
+                  }`}
+                >
+
+                  {isUploading
+                    ? "Uploading..."
+                    : isStartingScreening
+                      ? "Starting Screening..."
+                      : canStartScreening
+                        ? "Start Screening"
+                        : "Upload CVs"}
+
+                </button>
+              )}
 
             </div>
 
