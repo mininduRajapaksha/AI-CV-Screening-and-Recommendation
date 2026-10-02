@@ -62,6 +62,36 @@ const startScreening = async (req, res, next) => {
     }
 }
 
+const getScreeningStatus = async (req, res, next) => {
+    try {
+        const screening = await Screening.findById(req.params.id)
+
+        if (!screening) {
+            return res.status(404).json({
+                success: false,
+                message: "Screening not found"
+            })
+        }
+
+        res.status(200).json({
+            success: true,
+            screening: {
+                _id: screening._id,
+                jobId: screening.jobId,
+                totalCVs: screening.totalCVs,
+                completedCVs: screening.completedCVs,
+                failedCVs: screening.failedCVs,
+                status: screening.status,
+                createdAt: screening.createdAt,
+                updatedAt: screening.updatedAt
+            }
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports = {
-    startScreening
+    startScreening,
+    getScreeningStatus
 }
