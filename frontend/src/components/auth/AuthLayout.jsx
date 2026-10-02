@@ -10,7 +10,7 @@ const features = [
 export default function AuthLayout({ children }) {
   return (
     <div className="min-h-screen flex">
-      <aside className="hidden lg:flex w-[49%] min-h-screen bg-gradient-to-b from-authblue to-authblue-dark px-12 py-12 flex-col justify-center text-white">
+      <aside className="hidden lg:flex w-[49%] min-h-screen bg-[#1E2A4A] px-12 py-12 flex-col justify-center text-white">
         <div className="max-w-lg mx-auto w-full">
           <div className="w-24 h-24 mb-6 rounded-3xl bg-white/10 backdrop-blur flex items-center justify-center border border-white/20 p-4">
             <img src={logo} alt="CVision AI" className="w-20 h-20 object-contain" />
@@ -44,7 +44,7 @@ export default function AuthLayout({ children }) {
         </div>
       </aside>
 
-      <main className="flex-1 min-h-screen bg-[#eef3f8] flex items-center justify-center p-6 lg:p-12">
+      <main className="flex-1 min-h-screen bg-[#F7F9FC] flex items-center justify-center p-6 lg:p-12">
         {children}
       </main>
     </div>
