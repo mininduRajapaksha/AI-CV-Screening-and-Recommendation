@@ -18,6 +18,7 @@ const screeningRoutes = require("./routes/screeningRoutes");
 const adminDatabaseRoutes = require("./routes/adminDatabaseRoutes");
 const adminUserRoutes = require("./routes/adminUserRoutes");
 const profileRoutes = require("./routes/profileRoutes")
+const notificationRoutes = require("./routes/notificationRoutes")
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use("/api/admin", adminDatabaseRoutes);
 app.use("/api/admin", adminUserRoutes);
 
 app.use("/api/profile", profileRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Return JSON for route and validation failures so API clients never receive
 // Express's default HTML error page.
