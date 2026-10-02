@@ -1,0 +1,8 @@
+﻿[
+  { "rank": 1, "candidateId": "c1", "name": "Harshani", "appliedRole": "Senior Product Designer", "matchPercent": 98, "recommendation": "Highly Recommended", "missingSkills": [] },
+  { "rank": 2, "candidateId": "c2", "name": "Kasun", "appliedRole": "Senior Product Designer", "matchPercent": 82, "recommendation": "Highly Recommended", "missingSkills": ["Prototyping"] },
+  { "rank": 3, "candidateId": "c3", "name": "Pabudi", "appliedRole": "Senior Product Designer", "matchPercent": 78, "recommendation": "Recommended", "missingSkills": ["B2B SaaS"] },
+  { "rank": 4, "candidateId": "c4", "name": "Diluni", "appliedRole": "Senior Product Designer", "matchPercent": 75, "recommendation": "Recommended", "missingSkills": ["User Research"] },
+  { "rank": 5, "candidateId": "c5", "name": "Kaushi", "appliedRole": "Senior Product Designer", "matchPercent": 63, "recommendation": "Not Recommended", "missingSkills": ["Figma", "Design Systems"] },
+  { "rank": 6, "candidateId": "c6", "name": "Ravindu", "appliedRole": "Senior Product Designer", "matchPercent": 52, "recommendation": "Not Recommended", "missingSkills": ["Figma", "Prototyping", "B2B SaaS"] }
+]

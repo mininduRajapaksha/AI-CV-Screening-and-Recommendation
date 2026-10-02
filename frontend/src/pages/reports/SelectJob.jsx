@@ -1,57 +1,62 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Search } from 'lucide-react'
-import Badge from '../../components/ui/Badge'
-import { useJobs } from '../../context/JobContext'
-
-function JobCard({ job, onClick, recently }) {
-  const statusVariant = { Active: 'success', Draft: 'warning', Closed: 'danger' }
-  return (
-    <div onClick={onClick} className="bg-white rounded-xl shadow-sm p-5 cursor-pointer hover:shadow-md transition-shadow border border-transparent hover:border-coral">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-medium text-gray-500">{job.department}</span>
-        {recently ? <span className="text-xs text-gray-400">Modified 2h ago</span> : <Badge variant={statusVariant[job.status]}>{job.status}</Badge>}
-      </div>
-      <h3 className="font-bold text-navy mb-2">{job.title}</h3>
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-gray-500">{job.applications} candidates ranked</span>
-        {recently ? <span className="text-coral font-semibold">Open Report -&gt;</span> : <span className="bg-navy text-white px-2 py-1 rounded font-semibold">Select</span>}
-      </div>
-    </div>
-  )
-}
+﻿import { Link } from 'react-router-dom';
+import { Search, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import jobs from '../../mocks/jobs.json';
+import StatusPill from '../../components/ui/StatusPill';
 
 export default function SelectJob() {
-  const navigate = useNavigate()
-  const { jobs } = useJobs()
-  const [search, setSearch] = useState('')
-
-  const filtered = jobs.filter(j => j.title.toLowerCase().includes(search.toLowerCase()))
-  const recent = filtered.slice(0, 3)
+  const [query, setQuery] = useState('');
+  const recent = jobs.slice(0, 3);
+  const filtered = jobs.filter((j) => !query || j.title.toLowerCase().includes(query.toLowerCase()));
 
   return (
-    <>
-      <div className="flex items-start justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-navy">Select Job Posting</h2>
-          <p className="text-sm text-gray-500 mt-1">Select an open vacancy below to generate AI-backed candidate match and ranking matrices</p>
+          <h1 className="text-2xl font-bold text-slate-900">Select Job Posting</h1>
+          <p className="text-sm text-slate-500">Select an open vacancy below to generate AI-based candidate match and ranking metrics</p>
         </div>
         <div className="relative w-80">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search vacancy postings..."
-            className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-coral/30" />
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search vacancy postings" className="input-field pl-10" />
         </div>
       </div>
 
-      <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Recently Viewed Reports</p>
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        {recent.map(j => <JobCard key={j.id} job={j} onClick={() => navigate(`/reports/${j.id}`)} recently />)}
+      <div>
+        <h2 className="text-xs font-semibold text-slate-500 uppercase mb-3">Recently Viewed Reports</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {recent.map((j) => (
+            <Link to={`/reports/${j._id}`} key={j._id} className="card p-5 hover:shadow-md transition border-2 border-transparent hover:border-brand-blue">
+              <div className="flex items-center justify-between text-xs mb-3">
+                <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full">{j.department}</span>
+                <span className="text-slate-400">Modified 2h ago</span>
+              </div>
+              <h3 className="font-semibold text-slate-900">{j.title}</h3>
+              <p className="text-sm text-slate-500 mt-1">{j.applications} Candidates</p>
+              <div className="mt-4 text-brand-blue text-sm font-medium flex items-center gap-1">
+                Open Report <ArrowRight size={14} />
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
-      <p className="text-xs font-semibold text-gray-500 uppercase mb-3">All Open Postings ({jobs.length})</p>
-      <div className="grid grid-cols-3 gap-4">
-        {filtered.map(j => <JobCard key={j.id} job={j} onClick={() => navigate(`/reports/${j.id}`)} />)}
+      <div>
+        <h2 className="text-xs font-semibold text-slate-500 uppercase mb-3">All Open Postings ({filtered.length})</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {filtered.map((j) => (
+            <div key={j._id} className="card p-5">
+              <div className="flex items-center justify-between text-xs mb-3">
+                <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full">{j.department}</span>
+                <StatusPill value={j.status} />
+              </div>
+              <h3 className="font-semibold text-slate-900">{j.title}</h3>
+              <p className="text-sm text-slate-500 mt-1">{j.applications} candidates ranked</p>
+              <Link to={`/reports/${j._id}`} className="mt-4 inline-block btn-primary text-sm">Select</Link>
+            </div>
+          ))}
+        </div>
       </div>
-    </>
-  )
+    </div>
+  );
 }

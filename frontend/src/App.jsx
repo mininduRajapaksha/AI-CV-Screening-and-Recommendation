@@ -16,8 +16,10 @@ import JobList from './pages/jobs/JobList'
 import CreateJob from './pages/jobs/CreateJob'
 import JobDetails from './pages/jobs/JobDetails'
 import EditJob from './pages/jobs/EditJob'
+import { Toaster } from 'react-hot-toast'
 import SelectJob from './pages/reports/SelectJob'
 import CandidateRanking from './pages/reports/CandidateRanking'
+import CandidateDetail from './pages/CandidateDetail'
 
 import AdminLayout from './layouts/AdminLayout'
 import UserManagement from './pages/Admin/UserManagement'
@@ -29,6 +31,7 @@ export default function App() {
   return (
     <AuthProvider>
       <JobProvider>
+        <Toaster position="top-right" />
         <Router>
           <Routes>
             {/* Auth Pages */}
@@ -45,8 +48,10 @@ export default function App() {
               <Route path="jobs/:id/edit" element={<EditJob />} />
               <Route path="cv-upload" element={<CVUpload />} />
               <Route path="candidates" element={<Candidates />} />
+              <Route path="candidates/:candidateId" element={<CandidateDetail />} />
               <Route path="reports" element={<SelectJob />} />
               <Route path="reports/:id" element={<CandidateRanking />} />
+              <Route path="reports/:jobId" element={<CandidateRanking />} />
               <Route path="profile" element={<Profile />} />
             </Route>
 
