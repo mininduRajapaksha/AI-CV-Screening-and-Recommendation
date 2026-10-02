@@ -63,8 +63,34 @@ const multipleCVs = async (req, res, next) => {
     }
 }
 
+const getCVsByIds = async (req, res, next) => {
+    try {
+        const { ids } = req.query;
+
+        if (!ids) {
+            return res.status(400).json({
+                success: false,
+                message: "CV IDs are required"
+            });
+        }
+
+        const cvIds = ids.split(",");
+
+        const cvs = await CV.find({
+            _id: { $in: cvIds }
+        });
+
+        res.status(200).json({
+            success: true,
+            cvs
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 module.exports = {
     singleCV,
-    multipleCVs
+    multipleCVs,
+    getCVsByIds
 }

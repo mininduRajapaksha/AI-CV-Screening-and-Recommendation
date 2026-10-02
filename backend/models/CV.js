@@ -29,7 +29,7 @@ const cvSchema = new mongoose.Schema({
 
     status: {
         type: String,
-        enum: ["pending", "processing", "complete", "failed"],
+        enum: ["pending", "processing", "complete", "failed", "cancelled"],
         default: "pending"
     },
 
