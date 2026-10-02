@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Bell,
   CheckCircle2,
@@ -34,10 +35,13 @@ const notifications = [
   },
 ]
 
-export default function Navbar({
-  title = 'Welcome Back, Minindu!',
-}) {
+export default function Navbar({ title }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
+
+  // Derive a friendly first name from the stored user object
+  const firstName = user?.name?.split(' ')[0] ?? 'there'
+  const resolvedTitle = title ?? `Welcome Back, ${firstName}!`
 
   const [showNotifications, setShowNotifications] =
     useState(false)
@@ -78,7 +82,7 @@ export default function Navbar({
       {/* PAGE TITLE */}
 
       <h1 className="text-lg text-slate-800">
-        {title}
+        {resolvedTitle}
       </h1>
 
       <div className="flex h-full items-center gap-10">
@@ -190,25 +194,30 @@ export default function Navbar({
 
         {/* USER PROFILE */}
 
-        <div className="flex cursor-pointer items-center gap-2.5">
+        <button
+          type="button"
+          onClick={() => navigate('/profile')}
+          aria-label="Go to profile"
+          className="flex cursor-pointer items-center gap-2.5"
+        >
 
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#172554] text-xs font-semibold text-white">
-            {user?.initials || 'MR'}
+            {user?.initials ?? (user?.name ? user.name[0].toUpperCase() : '?')}
           </div>
 
-          <div className="leading-tight">
+          <div className="leading-tight text-left">
 
             <p className="text-sm font-semibold text-slate-800">
-              {user?.name || 'Minindu R.'}
+              {user?.name ?? 'Unknown User'}
             </p>
 
             <p className="text-xs text-slate-500">
-              {user?.role || 'HR Manager'}
+              {user?.role ?? 'User'}
             </p>
 
           </div>
 
-        </div>
+        </button>
 
       </div>
 
