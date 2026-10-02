@@ -2,9 +2,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 
 
-// ==================================================
-// GET CURRENT USER PROFILE
-// ==================================================
+// get current user profile
 
 const getProfile = async (req, res, next) => {
     try {
@@ -36,9 +34,7 @@ const getProfile = async (req, res, next) => {
 };
 
 
-// ==================================================
-// UPDATE CURRENT USER PROFILE
-// ==================================================
+// update current user profile
 
 const updateProfile = async (req, res, next) => {
     try {
@@ -83,9 +79,7 @@ const updateProfile = async (req, res, next) => {
 };
 
 
-// ==================================================
-// UPDATE CURRENT USER PASSWORD
-// ==================================================
+// update current user password
 
 const updatePassword = async (req, res, next) => {
     try {

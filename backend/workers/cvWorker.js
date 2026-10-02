@@ -62,10 +62,7 @@ const startWorker = async () => {
             console.log(`Processing CV: ${cvId}`)
             console.log(`Job ID: ${jobId}`)
 
-            // -----------------------------
             // Find CV
-            // -----------------------------
-
             const cv = await CV.findById(cvId)
 
             if (!cv) {
@@ -74,10 +71,8 @@ const startWorker = async () => {
                 )
             }
 
-            // -----------------------------
+            
             // Find Screening
-            // -----------------------------
-
             const screening =
                 await Screening.findById(
                     screeningId
@@ -97,10 +92,8 @@ const startWorker = async () => {
                 return
             }
 
-            // -----------------------------
+            
             // Find Job
-            // -----------------------------
-
             const jobPosting =
                 await Job.findById(jobId)
 
@@ -114,19 +107,16 @@ const startWorker = async () => {
                 `Job found: ${jobPosting.title}`
             )
 
-            // -----------------------------
+            
             // Mark CV as processing
-            // -----------------------------
-
             cv.status = "processing"
 
             cv.errorMessage = null
 
             await cv.save()
 
-            // -----------------------------
+            
             // Prepare Job Description
-            // -----------------------------
 
             const jobDescription = `
 Job Title: ${jobPosting.title}
@@ -156,10 +146,8 @@ ${
                 "Sending CV to AI service..."
             )
 
-            // -----------------------------
+            
             // AI Processing
-            // -----------------------------
-
             const aiResponse =
                 await processCV(
                     cv.filePath,
@@ -178,10 +166,8 @@ ${
                 )
             )
 
-            // -----------------------------
+            
             // Check AI response
-            // -----------------------------
-
             if (
                 !aiResponse ||
                 aiResponse.success === false
@@ -222,10 +208,8 @@ ${
                 return
             }
 
-            // -----------------------------
+            
             // Save Candidate
-            // -----------------------------
-
             const candidate =
                 await Candidate.create({
 
@@ -299,20 +283,16 @@ ${
                 return
             }
 
-            // -----------------------------
+            
             // Mark CV complete
-            // -----------------------------
-
             cv.status = "complete"
 
             cv.errorMessage = null
 
             await cv.save()
 
-            // -----------------------------
+            
             // Update Screening
-            // -----------------------------
-
             screeningToUpdate.completedCVs += 1
 
             const processedCVs =
@@ -357,10 +337,8 @@ ${
         }
     )
 
-    // -----------------------------
+    
     // Job completed
-    // -----------------------------
-
     worker.on(
         "completed",
         (job) => {
@@ -371,10 +349,8 @@ ${
         }
     )
 
-    // -----------------------------
+    
     // Job failed
-    // -----------------------------
-
     worker.on(
         "failed",
         async (job, error) => {
@@ -398,9 +374,6 @@ ${
                 const failureMessage =
                     getFailureMessage(error)
 
-                // A cancellation may happen while an active worker is still
-                // processing. Preserve that state instead of overwriting it
-                // with a failed result.
                 const screeningForFailure =
                     await Screening.findById(screeningId)
 
@@ -408,10 +381,8 @@ ${
                     return
                 }
 
-                // -----------------------------
+                
                 // Mark CV as failed
-                // -----------------------------
-
                 const cv =
                     await CV.findById(
                         cvId
@@ -431,10 +402,8 @@ ${
                     )
                 }
 
-                // -----------------------------
+                
                 // Update Screening
-                // -----------------------------
-
                 const screening =
                     await Screening.findById(
                         screeningId
@@ -463,10 +432,8 @@ ${
                     screening.completedCVs +
                     screening.failedCVs
 
-                // -----------------------------
+                
                 // Check if all CVs finished
-                // -----------------------------
-
                 if (
                     processedCVs >=
                     screening.totalCVs

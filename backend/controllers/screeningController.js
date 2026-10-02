@@ -153,9 +153,7 @@ const cancelScreening = async (req, res, next) => {
             });
         }
 
-        // Active jobs are locked by BullMQ and cannot be removed safely.
-        // Marking the screening cancelled tells workers to stop them at the
-        // next cancellation check; only queued work is removed here.
+        //only queued work is removed here.
         const jobs = await cvQueue.getJobs([
             "waiting",
             "delayed"

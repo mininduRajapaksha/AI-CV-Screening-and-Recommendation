@@ -1,9 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const {
-    getDatabaseStatus
-} = require("../controllers/adminDatabaseController");
+const {getDatabaseStatus} = require("../controllers/adminDatabaseController");
 
 const { protect } = require("../middleware/authMiddleware");
 
