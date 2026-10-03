@@ -17,6 +17,8 @@ const API_BASE_URL = (
   "http://localhost:5000/api"
 ).replace(/\/$/, "");
 
+const DISMISSED_SCREENING_KEY = "cvision_dismissed_screening_id";
+
 function getAuthHeaders() {
   const token = localStorage.getItem("cvision_token");
 
@@ -266,6 +268,8 @@ export default function CVUpload() {
   // -----------------------------
 
   useEffect(() => {
+    let cancelled = false;
+
     const restoreActiveScreening = async () => {
       try {
         const response = await fetch(
@@ -281,25 +285,39 @@ export default function CVUpload() {
         );
 
         /*
-         * The backend may return the screening either as:
-         *   { success: true, screening: {...} }
-         * or directly as the screening object.
-         *
-         * Support both response shapes so restoring a failed
-         * screening does not silently remove it from the UI.
+         * If the page was cleared/unmounted while the request
+         * was still in progress, do not restore the old state.
          */
+        if (cancelled) {
+          return;
+        }
+
         const screening =
           data?.screening ||
           data?.data ||
           (data?._id ? data : null);
 
-        /*
-         * No active screening.
-         *
-         * This is the normal state when the user first
-         * opens the CV Upload page.
-         */
         if (!screening) {
+          return;
+        }
+
+        /*
+         * A failed screening is kept in the database so that
+         * its result can be displayed. However, when the user
+         * explicitly clicks "Clear All Files", that screening
+         * should not be restored when they navigate away and
+         * come back.
+         */
+        const dismissedScreeningId =
+          localStorage.getItem(
+            DISMISSED_SCREENING_KEY
+          );
+
+        if (
+          dismissedScreeningId &&
+          String(dismissedScreeningId) ===
+            String(screening._id)
+        ) {
           return;
         }
 
@@ -348,6 +366,10 @@ export default function CVUpload() {
               "Failed to restore uploaded CVs"
             );
 
+          if (cancelled) {
+            return;
+          }
+
           if (
             cvData.cvs &&
             Array.isArray(
@@ -383,14 +405,20 @@ export default function CVUpload() {
           }
         }
       } catch (error) {
-        console.error(
-          "Error restoring active screening:",
-          error
-        );
+        if (!cancelled) {
+          console.error(
+            "Error restoring active screening:",
+            error
+          );
+        }
       }
     };
 
     restoreActiveScreening();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // -----------------------------
@@ -402,14 +430,40 @@ export default function CVUpload() {
       return;
     }
 
+    /*
+     * A screening ID must be a MongoDB ObjectId.
+     *
+     * If "readiness" (or another route name) ever gets
+     * assigned to screeningId, calling:
+     *
+     *   /screening/readiness
+     *
+     * will hit the readiness endpoint instead of the
+     * screening-status endpoint and the polling loop will
+     * never receive a screening object.
+     */
+    const isValidScreeningId =
+      /^[a-fA-F0-9]{24}$/.test(String(screeningId));
+
+    if (!isValidScreeningId) {
+      console.error(
+        "Invalid screeningId. Polling stopped:",
+        screeningId
+      );
+      return;
+    }
+
     let intervalId;
 
     const fetchScreeningStatus =
       async () => {
         try {
+          const statusUrl =
+            `${API_BASE_URL}/screening/${screeningId}`;
+
           const response =
             await fetch(
-              `${API_BASE_URL}/screening/${screeningId}`,
+              statusUrl,
               {
                 headers:
                   getAuthHeaders(),
@@ -441,8 +495,19 @@ export default function CVUpload() {
           if (!screening || !screening.status) {
             console.error(
               "Invalid screening status response:",
-              data
+              {
+                screeningId,
+                url: statusUrl,
+                response: data,
+              }
             );
+
+            /*
+             * Do not keep polling a response that is not a
+             * screening-status object. This prevents a
+             * runaway browser-console loop.
+             */
+            clearInterval(intervalId);
             return;
           }
 
@@ -523,6 +588,11 @@ export default function CVUpload() {
   const addFiles = (
     selectedFiles
   ) => {
+    // A new upload starts a fresh CV workflow.
+    localStorage.removeItem(
+      DISMISSED_SCREENING_KEY
+    );
+
     const incomingFiles =
       Array.from(
         selectedFiles
@@ -678,6 +748,18 @@ export default function CVUpload() {
       )
     ) {
       return;
+    }
+
+    /*
+     * Remember that this terminal screening was explicitly
+     * dismissed by the user. The backend record remains intact,
+     * but /screening/active must not restore it on the next visit.
+     */
+    if (screeningId) {
+      localStorage.setItem(
+        DISMISSED_SCREENING_KEY,
+        String(screeningId)
+      );
     }
 
     setFiles([]);
