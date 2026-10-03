@@ -1,4 +1,4 @@
-﻿import api from './axios';
+import api from './axios';
 
 export const reportsApi = {
   ranking: (jobId, params) => api.get(`/reports/${jobId}/ranking`, { params }),
