@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { getRankedCandidates, exportCSV, exportPDF } = require('../controllers/reportController');
 
-// Routes for Reports
-router.get('/ranking', getRankedCandidates);
-router.get('/export/csv', exportCSV);
-router.get('/export/pdf', exportPDF);
+// Add :jobId to filter candidates by the specific job
+router.get('/:jobId/ranking', getRankedCandidates);
+router.get('/:jobId/export/csv', exportCSV);
+router.get('/:jobId/export/pdf', exportPDF);
 
 module.exports = router;
