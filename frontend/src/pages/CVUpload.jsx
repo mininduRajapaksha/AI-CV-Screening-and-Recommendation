@@ -281,16 +281,27 @@ export default function CVUpload() {
         );
 
         /*
+         * The backend may return the screening either as:
+         *   { success: true, screening: {...} }
+         * or directly as the screening object.
+         *
+         * Support both response shapes so restoring a failed
+         * screening does not silently remove it from the UI.
+         */
+        const screening =
+          data?.screening ||
+          data?.data ||
+          (data?._id ? data : null);
+
+        /*
          * No active screening.
          *
          * This is the normal state when the user first
          * opens the CV Upload page.
          */
-        if (!data.screening) {
+        if (!screening) {
           return;
         }
-
-        const screening = data.screening;
 
         console.log(
           "Active screening restored:",
@@ -351,8 +362,12 @@ export default function CVUpload() {
                   name: cv.originalName,
                   size: cv.fileSize,
                   progress: 100,
-                  status: "uploaded",
-                  error: null,
+                  status:
+                    cv.status === "failed"
+                      ? "failed"
+                      : "uploaded",
+                  error:
+                    cv.errorMessage || null,
                   cvId: cv._id,
                 })
               );
@@ -407,22 +422,46 @@ export default function CVUpload() {
               "Failed to fetch screening status"
             );
 
+          /*
+           * The backend may return:
+           *   { success: true, screening: {...} }
+           *   { success: true, data: {...} }
+           * or the screening object directly.
+           *
+           * The previous code always used data.screening,
+           * which caused:
+           *   Cannot read properties of undefined (reading 'status')
+           * when this endpoint returned the screening directly.
+           */
+          const screening =
+            data?.screening ||
+            data?.data ||
+            (data?._id ? data : null);
+
+          if (!screening || !screening.status) {
+            console.error(
+              "Invalid screening status response:",
+              data
+            );
+            return;
+          }
+
           setScreeningStatus(
-            data.screening
+            screening
           );
 
           console.log(
             "Screening status:",
-            data.screening
+            screening
           );
 
           // Stop polling when finished
           if (
-            data.screening.status ===
+            screening.status ===
               "complete" ||
-            data.screening.status ===
+            screening.status ===
               "failed" ||
-            data.screening.status ===
+            screening.status ===
               "cancelled"
           ) {
             clearInterval(
@@ -978,12 +1017,10 @@ export default function CVUpload() {
         return;
       }
 
-      const uploadedCVIds =
+      const restartCVIds =
         files
           .filter(
             (file) =>
-              file.status ===
-                "uploaded" &&
               file.cvId
           )
           .map(
@@ -992,7 +1029,7 @@ export default function CVUpload() {
           );
 
       if (
-        uploadedCVIds.length ===
+        restartCVIds.length ===
         0
       ) {
         alert(
@@ -1036,7 +1073,7 @@ export default function CVUpload() {
                 jobId:
                   selectedJob,
                 cvIds:
-                  uploadedCVIds,
+                  restartCVIds,
               }),
             }
           );
@@ -1236,6 +1273,13 @@ export default function CVUpload() {
   const screeningProcessing =
     screeningStatus?.status ===
     "processing";
+
+  const screeningErrors =
+    Array.isArray(
+      screeningStatus?.errors
+    )
+      ? screeningStatus.errors
+      : [];
 
   // -----------------------------
   // Button state
@@ -1803,9 +1847,11 @@ export default function CVUpload() {
 
                     <p className="mt-1 text-xs text-slate-500">
                       {screeningComplete
-                        ? "All CVs have been processed."
+                        ? failedScreeningCVs > 0
+                          ? "Screening completed with some CV processing errors."
+                          : "All CVs have been processed successfully."
                         : screeningFailed
-                          ? "The screening process failed."
+                          ? "The screening failed because none of the CVs could be processed."
                           : screeningCancelled
                             ? "The screening was cancelled."
                             : "CVs are being analyzed by the AI screening system."}
@@ -1869,6 +1915,60 @@ export default function CVUpload() {
                   </span>
 
                 </div>
+
+                {/* Processing Errors */}
+
+                {screeningErrors.length > 0 && (
+                  <div className="mt-5 rounded-lg border border-red-200 bg-red-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle
+                        size={18}
+                        className="mt-0.5 shrink-0 text-red-600"
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-red-800">
+                          CV Processing Errors
+                        </p>
+
+                        <p className="mt-1 text-xs text-red-700">
+                          {screeningErrors.length === 1
+                            ? "1 CV could not be processed."
+                            : `${screeningErrors.length} CVs could not be processed.`}
+                        </p>
+
+                        <div className="mt-3 space-y-2">
+                          {screeningErrors.map(
+                            (errorItem, index) => {
+                              const failedFile =
+                                files.find(
+                                  (file) =>
+                                    file.cvId ===
+                                    errorItem.cvId
+                                );
+
+                              return (
+                                <div
+                                  key={`${errorItem.cvId || "error"}-${index}`}
+                                  className="rounded-md border border-red-200 bg-white px-3 py-2"
+                                >
+                                  <p className="text-xs font-medium text-slate-800">
+                                    {failedFile?.name ||
+                                      `CV ${index + 1}`}
+                                  </p>
+
+                                  <p className="mt-1 text-xs leading-5 text-red-700">
+                                    {errorItem.message}
+                                  </p>
+                                </div>
+                              );
+                            }
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Stop Screening */}
 

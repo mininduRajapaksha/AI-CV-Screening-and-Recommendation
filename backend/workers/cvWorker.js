@@ -17,45 +17,98 @@ const { processCV } = require("../services/aiService")
 |--------------------------------------------------------------------------
 | Failure Message Helper
 |--------------------------------------------------------------------------
+|
+| Converts technical AI/service errors into messages that are safe
+| and understandable for the frontend.
+|
+|--------------------------------------------------------------------------
 */
 
 const getFailureMessage = (error) => {
 
-    const status = error.response?.status
+    const status =
+        error.response?.status
 
-    const rawMessage = String(
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        ""
-    ).toLowerCase()
+    const rawMessage =
+        String(
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            error.message ||
+            ""
+        ).toLowerCase()
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rate Limit
+    |--------------------------------------------------------------------------
+    */
 
     if (status === 429) {
-        return "AI service rate limit reached. Please try again later."
+
+        return (
+            "AI service rate limit reached. " +
+            "Please try again later."
+        )
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Gemini Quota / Token Limit
+    |--------------------------------------------------------------------------
+    */
 
     if (
         rawMessage.includes("quota") ||
         rawMessage.includes("token limit")
     ) {
-        return "AI service usage limit reached. Please try again later."
+
+        return (
+            "AI service usage limit reached. " +
+            "Please try again later."
+        )
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI Service Busy
+    |--------------------------------------------------------------------------
+    */
 
     if (
         rawMessage.includes("busy") ||
         rawMessage.includes("overloaded")
     ) {
-        return "AI service is busy. Please try again later."
+
+        return (
+            "AI service is busy. " +
+            "Please try again later."
+        )
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI Service Server Error
+    |--------------------------------------------------------------------------
+    */
 
     if (status >= 500) {
-        return "AI service is temporarily unavailable. Please try again later."
+
+        return (
+            "AI service is temporarily unavailable. " +
+            "Please try again later."
+        )
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Connection Errors
+    |--------------------------------------------------------------------------
+    */
 
     if (
         [
@@ -64,9 +117,19 @@ const getFailureMessage = (error) => {
             "ECONNABORTED"
         ].includes(error.code)
     ) {
-        return "AI service is unavailable. Please try again later."
+
+        return (
+            "AI service is unavailable. " +
+            "Please try again later."
+        )
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Error
+    |--------------------------------------------------------------------------
+    */
 
     return (
         error.message ||
@@ -84,8 +147,7 @@ const getFailureMessage = (error) => {
 |
 | The heartbeat key expires after 15 seconds.
 |
-| This allows the backend to determine whether the CV worker
-| is actually running.
+| The backend uses this to determine whether the worker is running.
 |
 |--------------------------------------------------------------------------
 */
@@ -124,6 +186,7 @@ const updateWorkerHeartbeat = async (
 */
 
 const startWorker = async () => {
+
 
     /*
     |--------------------------------------------------------------------------
@@ -197,7 +260,9 @@ const startWorker = async () => {
             */
 
             const cv =
-                await CV.findById(cvId)
+                await CV.findById(
+                    cvId
+                )
 
 
             if (!cv) {
@@ -235,12 +300,15 @@ const startWorker = async () => {
             */
 
             if (
-                screening.status === "cancelled"
+                screening.status ===
+                "cancelled"
             ) {
 
-                cv.status = "cancelled"
+                cv.status =
+                    "cancelled"
 
-                cv.errorMessage = null
+                cv.errorMessage =
+                    null
 
                 await cv.save()
 
@@ -280,13 +348,15 @@ const startWorker = async () => {
 
             /*
             |--------------------------------------------------------------------------
-            | Mark CV as Processing
+            | Mark CV As Processing
             |--------------------------------------------------------------------------
             */
 
-            cv.status = "processing"
+            cv.status =
+                "processing"
 
-            cv.errorMessage = null
+            cv.errorMessage =
+                null
 
             await cv.save()
 
@@ -416,12 +486,15 @@ ${
 
             if (
                 !currentScreening ||
-                currentScreening.status === "cancelled"
+                currentScreening.status ===
+                    "cancelled"
             ) {
 
-                cv.status = "cancelled"
+                cv.status =
+                    "cancelled"
 
-                cv.errorMessage = null
+                cv.errorMessage =
+                    null
 
                 await cv.save()
 
@@ -443,7 +516,8 @@ ${
             const candidate =
                 await Candidate.create({
 
-                    jobId: jobId,
+                    jobId:
+                        jobId,
 
 
                     /*
@@ -551,12 +625,15 @@ ${
 
             if (
                 !screeningToUpdate ||
-                screeningToUpdate.status === "cancelled"
+                screeningToUpdate.status ===
+                    "cancelled"
             ) {
 
-                cv.status = "cancelled"
+                cv.status =
+                    "cancelled"
 
-                cv.errorMessage = null
+                cv.errorMessage =
+                    null
 
                 await cv.save()
 
@@ -575,9 +652,11 @@ ${
             |--------------------------------------------------------------------------
             */
 
-            cv.status = "complete"
+            cv.status =
+                "complete"
 
-            cv.errorMessage = null
+            cv.errorMessage =
+                null
 
             await cv.save()
 
@@ -588,7 +667,8 @@ ${
             |--------------------------------------------------------------------------
             */
 
-            screeningToUpdate.completedCVs += 1
+            screeningToUpdate.completedCVs +=
+                1
 
 
             const processedCVs =
@@ -601,8 +681,19 @@ ${
                 screeningToUpdate.totalCVs
             ) {
 
+                /*
+                |--------------------------------------------------------------
+                | If at least one CV completed successfully,
+                | the screening is considered complete.
+                |
+                | If every CV failed, the screening is failed.
+                |--------------------------------------------------------------
+                */
+
                 screeningToUpdate.status =
-                    "complete"
+                    screeningToUpdate.completedCVs > 0
+                        ? "complete"
+                        : "failed"
             }
 
 
@@ -621,7 +712,8 @@ ${
 
 
         {
-            connection: redisConnection
+            connection:
+                redisConnection
         }
     )
 
@@ -736,6 +828,12 @@ ${
                 } = job.data
 
 
+                /*
+                |--------------------------------------------------------------------------
+                | Convert Technical Error To User-Friendly Message
+                |--------------------------------------------------------------------------
+                */
+
                 const failureMessage =
                     getFailureMessage(
                         error
@@ -756,8 +854,10 @@ ${
 
                 if (
                     !screeningForFailure ||
-                    screeningForFailure.status === "cancelled"
+                    screeningForFailure.status ===
+                        "cancelled"
                 ) {
+
                     return
                 }
 
@@ -776,7 +876,8 @@ ${
 
                 if (cv) {
 
-                    cv.status = "failed"
+                    cv.status =
+                        "failed"
 
                     cv.errorMessage =
                         failureMessage
@@ -792,7 +893,7 @@ ${
 
                 /*
                 |--------------------------------------------------------------------------
-                | Update Screening
+                | Find Screening Again
                 |--------------------------------------------------------------------------
                 */
 
@@ -812,9 +913,17 @@ ${
                 }
 
 
+                /*
+                |--------------------------------------------------------------------------
+                | Check Cancellation
+                |--------------------------------------------------------------------------
+                */
+
                 if (
-                    screening.status === "cancelled"
+                    screening.status ===
+                    "cancelled"
                 ) {
+
                     return
                 }
 
@@ -825,20 +934,27 @@ ${
                 |--------------------------------------------------------------------------
                 */
 
-                screening.failedCVs += 1
+                screening.failedCVs +=
+                    1
 
 
                 /*
                 |--------------------------------------------------------------------------
-                | Store Error
+                | Store Processing Error
+                |--------------------------------------------------------------------------
+                |
+                | IMPORTANT:
+                | We use "processingErrors" instead of "errors"
+                | because "errors" is a reserved Mongoose pathname.
+                |
                 |--------------------------------------------------------------------------
                 */
 
-                screening.errors =
-                    screening.errors || []
+                screening.processingErrors =
+                    screening.processingErrors || []
 
 
-                screening.errors.push({
+                screening.processingErrors.push({
 
                     cvId,
 
@@ -876,11 +992,21 @@ ${
                 }
 
 
+                /*
+                |--------------------------------------------------------------------------
+                | Save Screening
+                |--------------------------------------------------------------------------
+                */
+
                 await screening.save()
 
 
                 console.log(
                     `Screening progress: ${processedCVs}/${screening.totalCVs}`
+                )
+
+                console.log(
+                    `Screening status: ${screening.status}`
                 )
 
             } catch (updateError) {

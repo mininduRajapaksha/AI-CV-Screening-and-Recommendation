@@ -36,7 +36,7 @@ const screeningSchema = new mongoose.Schema(
             default: 0
         },
 
-        errors: [
+        processingErrors: [
             {
                 cvId: {
                     type: mongoose.Schema.Types.ObjectId,

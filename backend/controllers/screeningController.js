@@ -41,15 +41,6 @@ const WORKER_HEARTBEAT_KEY =
 |--------------------------------------------------------------------------
 | Check Screening Readiness
 |--------------------------------------------------------------------------
-|
-| Checks:
-|
-| 1. MongoDB
-| 2. Redis
-| 3. AI Service
-| 4. CV Worker
-|
-|--------------------------------------------------------------------------
 */
 
 const checkScreeningReadiness = async () => {
@@ -283,15 +274,6 @@ const startScreening = async (
         |--------------------------------------------------------------------------
         | Check Service Readiness
         |--------------------------------------------------------------------------
-        |
-        | IMPORTANT:
-        |
-        | This happens BEFORE Screening.create().
-        |
-        | Therefore a screening will not be created if the
-        | worker or AI service is unavailable.
-        |
-        |--------------------------------------------------------------------------
         */
 
         const readiness =
@@ -396,7 +378,7 @@ const startScreening = async (
 
         /*
         |--------------------------------------------------------------------------
-        | Add CV Jobs to Queue
+        | Add CV Jobs To Queue
         |--------------------------------------------------------------------------
         */
 
@@ -523,6 +505,15 @@ const getScreeningStatus = async (
 |--------------------------------------------------------------------------
 | Get Active Screening
 |--------------------------------------------------------------------------
+|
+| IMPORTANT:
+|
+| "failed" is included here.
+|
+| Otherwise, when a screening completely fails, the backend returns
+| screening: null and the frontend thinks that the screening disappeared.
+|
+|--------------------------------------------------------------------------
 */
 
 const getActiveScreening = async (
@@ -542,7 +533,8 @@ const getActiveScreening = async (
                 status: {
                     $in: [
                         "pending",
-                        "processing"
+                        "processing",
+                        "failed"
                     ]
                 }
 
@@ -655,7 +647,10 @@ const cancelScreening = async (
                 "complete" ||
 
             screening.status ===
-                "cancelled"
+                "cancelled" ||
+
+            screening.status ===
+                "failed"
         ) {
 
             return res.status(400).json({
