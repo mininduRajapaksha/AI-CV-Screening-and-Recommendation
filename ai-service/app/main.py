@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.routes.processing import router as processing_router
 from app.routes.evaluator import router as evaluator_router
+from app.routes.decision_maker import router as decision_maker_router
 
 
 app = FastAPI(
@@ -32,5 +33,10 @@ app.include_router(
 
 app.include_router(
     evaluator_router,
+    prefix="/api/v1"
+)
+
+app.include_router(
+    decision_maker_router,
     prefix="/api/v1"
 )
