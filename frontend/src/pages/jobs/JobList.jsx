@@ -1,34 +1,98 @@
-﻿import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Edit3, Eye, Trash2, Briefcase, CheckCircle2, FileEdit, Lock } from 'lucide-react';
-import jobsData from '../../mocks/jobs.json';
+import {
+  Plus,
+  Search,
+  Edit3,
+  Eye,
+  Trash2,
+  Briefcase,
+  CheckCircle2,
+  FileEdit,
+  Lock,
+  Loader2,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import { jobsApi } from '../../api/jobs.api';
+import mockJobs from '../../mocks/jobs.json';
 import StatCard from '../../components/ui/StatCard';
 import StatusPill from '../../components/ui/StatusPill';
 
 export default function JobList() {
-  const [jobs, setJobs] = useState(jobsData);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [dept, setDept] = useState('');
   const [status, setStatus] = useState('');
 
-  const stats = useMemo(() => ({
-    total: jobs.length,
-    active: jobs.filter((j) => j.status === 'Active').length,
-    draft: jobs.filter((j) => j.status === 'Draft').length,
-    closed: jobs.filter((j) => j.status === 'Closed').length,
-  }), [jobs]);
+  const fetchJobs = async () => {
+    setLoading(true);
+    try {
+      const data = await jobsApi.list();
+      if (Array.isArray(data)) {
+        setJobs(data);
+      } else {
+        setJobs(mockJobs);
+      }
+    } catch (err) {
+      console.error('Failed to fetch jobs from backend:', err);
+      // Fallback to mock data if backend has no jobs or connection error
+      setJobs(mockJobs);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const filtered = jobs.filter((j) =>
-    (!query || j.title.toLowerCase().includes(query.toLowerCase())) &&
-    (!dept || j.department === dept) &&
-    (!status || j.status === status)
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const stats = useMemo(
+    () => ({
+      total: jobs.length,
+      active: jobs.filter((j) => j.status === 'Active').length,
+      draft: jobs.filter((j) => j.status === 'Draft').length,
+      closed: jobs.filter((j) => j.status === 'Closed').length,
+    }),
+    [jobs]
   );
 
-  const departments = [...new Set(jobs.map((j) => j.department))];
+  const filtered = useMemo(() => {
+    return jobs.filter((j) => {
+      const titleMatch = !query || j.title?.toLowerCase().includes(query.toLowerCase());
+      const deptMatch = !dept || j.department === dept;
+      const statusMatch = !status || j.status === status;
+      return titleMatch && deptMatch && statusMatch;
+    });
+  }, [jobs, query, dept, status]);
 
-  const handleDelete = (id) => {
+  const departments = useMemo(() => {
+    return [...new Set(jobs.map((j) => j.department).filter(Boolean))];
+  }, [jobs]);
+
+  const handleDelete = async (id) => {
     if (!window.confirm('Delete this job posting? This cannot be undone.')) return;
-    setJobs((prev) => prev.filter((j) => j._id !== id));
+    try {
+      await jobsApi.remove(id);
+      toast.success('Job deleted successfully');
+      setJobs((prev) => prev.filter((j) => (j._id || j.id) !== id));
+    } catch (err) {
+      console.error('Failed to delete job:', err);
+      toast.error(err.response?.data?.message || 'Error deleting job');
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch {
+      return dateStr;
+    }
   };
 
   return (
@@ -36,7 +100,9 @@ export default function JobList() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Job Postings</h1>
-          <p className="text-sm text-slate-500">Manage and track your company&apos;s open career opportunities</p>
+          <p className="text-sm text-slate-500">
+            Manage and track your company&apos;s open career opportunities
+          </p>
         </div>
         <Link to="/jobs/create" className="btn-primary inline-flex items-center gap-2">
           <Plus size={18} /> Create New Job
@@ -60,11 +126,21 @@ export default function JobList() {
             className="input-field pl-10"
           />
         </div>
-        <select value={dept} onChange={(e) => setDept(e.target.value)} className="input-field max-w-[180px]">
+        <select
+          value={dept}
+          onChange={(e) => setDept(e.target.value)}
+          className="input-field max-w-[180px]"
+        >
           <option value="">All Departments</option>
-          {departments.map((d) => <option key={d}>{d}</option>)}
+          {departments.map((d) => (
+            <option key={d}>{d}</option>
+          ))}
         </select>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className="input-field max-w-[160px]">
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="input-field max-w-[160px]"
+        >
           <option value="">All Statuses</option>
           <option>Active</option>
           <option>Draft</option>
@@ -73,39 +149,75 @@ export default function JobList() {
       </div>
 
       <div className="card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-6 py-3">Job Title</th>
-              <th className="px-6 py-3">Department</th>
-              <th className="px-6 py-3">Posted Date</th>
-              <th className="px-6 py-3">Applications</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filtered.map((j) => (
-              <tr key={j._id} className="hover:bg-slate-50">
-                <td className="px-6 py-4 font-medium text-slate-900">{j.title}</td>
-                <td className="px-6 py-4 text-slate-600">{j.department}</td>
-                <td className="px-6 py-4 text-slate-500">{new Date(j.postedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                <td className="px-6 py-4 font-semibold">{j.applications}</td>
-                <td className="px-6 py-4"><StatusPill value={j.status} /></td>
-                <td className="px-6 py-4">
-                  <div className="flex justify-end gap-2 text-slate-500">
-                    <Link to={`/jobs/${j._id}/edit`} className="p-1.5 rounded hover:bg-slate-100"><Edit3 size={16} /></Link>
-                    <Link to={`/jobs/${j._id}`} className="p-1.5 rounded hover:bg-slate-100"><Eye size={16} /></Link>
-                    <button onClick={() => handleDelete(j._id)} className="p-1.5 rounded hover:bg-red-50 text-red-500"><Trash2 size={16} /></button>
-                  </div>
-                </td>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+            <Loader2 className="animate-spin text-navy-900 mb-2" size={32} />
+            <p className="text-sm">Loading jobs from server...</p>
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-6 py-3">Job Title</th>
+                <th className="px-6 py-3">Department</th>
+                <th className="px-6 py-3">Posted Date</th>
+                <th className="px-6 py-3">Applications</th>
+                <th className="px-6 py-3">Status</th>
+                <th className="px-6 py-3 text-right">Actions</th>
               </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-400">No jobs match your filters.</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filtered.map((j) => {
+                const jobId = j._id || j.id;
+                return (
+                  <tr key={jobId} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 font-medium text-slate-900">{j.title}</td>
+                    <td className="px-6 py-4 text-slate-600">{j.department || 'N/A'}</td>
+                    <td className="px-6 py-4 text-slate-500">
+                      {formatDate(j.createdAt || j.postedDate)}
+                    </td>
+                    <td className="px-6 py-4 font-semibold">{j.applications ?? 0}</td>
+                    <td className="px-6 py-4">
+                      <StatusPill value={j.status} />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex justify-end gap-2 text-slate-500">
+                        <Link
+                          to={`/jobs/${jobId}/edit`}
+                          className="p-1.5 rounded hover:bg-slate-100"
+                          title="Edit"
+                        >
+                          <Edit3 size={16} />
+                        </Link>
+                        <Link
+                          to={`/jobs/${jobId}`}
+                          className="p-1.5 rounded hover:bg-slate-100"
+                          title="View Details"
+                        >
+                          <Eye size={16} />
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(jobId)}
+                          className="p-1.5 rounded hover:bg-red-50 text-red-500 cursor-pointer"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
+                    No jobs match your filters.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
