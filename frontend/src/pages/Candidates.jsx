@@ -62,7 +62,7 @@ export default function Candidates() {
   useEffect(() => {
     const fetchCandidates = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/candidates/job/1');
+        const response = await axios.get('http://localhost:5000/api/candidates');
         if(response.data.success) {
             // Sorting candidates by Match Percentage (Highest to Lowest)
             const sortedCandidates = response.data.data.sort((a, b) => b.matchPercentage - a.matchPercentage);
@@ -92,6 +92,8 @@ export default function Candidates() {
             profileData.matchPercentage = candidate.matchPercentage;
             profileData.aiRecommendation = candidate.aiRecommendation;
             profileData.personalInfo.email = candidate.personalInfo?.email || `${cName.split(' ')[0].toLowerCase()}@example.com`;
+            // Ensure jobTitle is carried over if not in profile details
+            profileData.jobTitle = profileData.jobTitle || candidate.jobTitle;
             
             setSelectedCandidate(profileData);
         }
@@ -120,7 +122,8 @@ export default function Candidates() {
     const headers = ["Rank", "Candidate Name", "Applied For", "AI Match (%)", "Recommendation"];
     const rows = filteredCandidates.map((c, i) => {
       const cName = c.personalInfo?.name || c.name || "Unknown";
-      return [`#0${i+1}`, cName, "Software Engineer", c.matchPercentage, c.aiRecommendation];
+      // Using real jobTitle from database
+      return [`#0${i+1}`, cName, c.jobTitle || "N/A", c.matchPercentage, c.aiRecommendation];
     });
     const csvContent = [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -140,7 +143,8 @@ export default function Candidates() {
     const tableColumn = ["Rank", "Candidate Name", "Applied For", "AI Match (%)", "Recommendation"];
     const tableRows = filteredCandidates.map((c, i) => {
       const cName = c.personalInfo?.name || c.name || "Unknown";
-      return [`#0${i+1}`, cName, "Software Engineer", c.matchPercentage, c.aiRecommendation];
+      // Using real jobTitle from database
+      return [`#0${i+1}`, cName, c.jobTitle || "N/A", c.matchPercentage, c.aiRecommendation];
     });
     autoTable(doc, { head: [tableColumn], body: tableRows, startY: 20 });
     doc.save("candidates_report.pdf");
@@ -178,7 +182,8 @@ export default function Candidates() {
               <div className="flex flex-col gap-2 text-xs text-slate-600 mt-1">
                 <div className="flex items-center gap-2">
                   <Briefcase size={14} className="text-slate-500" />
-                  <span>Applied For: <span className="font-medium">Software Engineer</span></span>
+                  {/* Using real jobTitle from database */}
+                  <span>Applied For: <span className="font-medium">{selectedCandidate.jobTitle || "N/A"}</span></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail size={14} className="text-slate-500" />
@@ -363,7 +368,8 @@ export default function Candidates() {
                     <tr key={index} className="border-b border-slate-100 hover:bg-slate-50">
                       <td className="p-4 font-medium text-slate-600">#0{index + 1}</td>
                       <td className="p-4 text-center font-medium">{cName}</td>
-                      <td className="p-4 text-center text-slate-600">Software Engineer</td>
+                      {/* Using real jobTitle from database */}
+                      <td className="p-4 text-center text-slate-600">{candidate.jobTitle || "N/A"}</td>
                       <td className="p-4 text-center">
                         <CircularProgress value={candidate.matchPercentage} color={styles.color} />
                       </td>
