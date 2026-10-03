@@ -17,6 +17,8 @@ const API_BASE_URL = (
   "http://localhost:5000/api"
 ).replace(/\/$/, "");
 
+const DISMISSED_SCREENING_KEY = "cvision_dismissed_screening_id";
+
 function getAuthHeaders() {
   const token = localStorage.getItem("cvision_token");
 
@@ -72,6 +74,133 @@ export default function CVUpload() {
 
   const [screeningId, setScreeningId] = useState(null);
   const [screeningStatus, setScreeningStatus] = useState(null);
+
+  // -----------------------------
+  // Screening readiness
+  // -----------------------------
+
+  const [screeningReadiness, setScreeningReadiness] = useState({
+    checked: false,
+    ready: false,
+    services: {
+      database: false,
+      redis: false,
+      aiService: false,
+      worker: false,
+    },
+    message: "",
+  });
+
+  // -----------------------------
+  // Check screening readiness
+  // -----------------------------
+
+  const checkScreeningReadiness = async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/screening/readiness`,
+        {
+          headers: {
+            ...getAuthHeaders(),
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok && !data) {
+        throw new Error(
+          "Unable to check screening services."
+        );
+      }
+
+      if (data?.success) {
+        let message = "";
+
+        if (!data.ready) {
+          if (!data.services?.database) {
+            message =
+              "Database service is unavailable.";
+          } else if (!data.services?.redis) {
+            message =
+              "Redis service is unavailable.";
+          } else if (!data.services?.aiService) {
+            message =
+              "AI service is unavailable. Please start the AI service.";
+          } else if (!data.services?.worker) {
+            message =
+              "CV processing worker is not running. Please start the worker.";
+          } else {
+            message =
+              "Screening services are not ready.";
+          }
+        }
+
+        setScreeningReadiness({
+          checked: true,
+          ready: data.ready === true,
+          services: {
+            database:
+              data.services?.database === true,
+            redis:
+              data.services?.redis === true,
+            aiService:
+              data.services?.aiService === true,
+            worker:
+              data.services?.worker === true,
+          },
+          message,
+        });
+
+        return data;
+      }
+
+      throw new Error(
+        data?.message ||
+          "Unable to check screening services."
+      );
+    } catch (error) {
+      console.error(
+        "Screening readiness check failed:",
+        error
+      );
+
+      setScreeningReadiness({
+        checked: true,
+        ready: false,
+        services: {
+          database: false,
+          redis: false,
+          aiService: false,
+          worker: false,
+        },
+        message:
+          error.message ||
+          "Unable to check screening services.",
+      });
+
+      return null;
+    }
+  };
+
+  // -----------------------------
+  // Check readiness on page load
+  // -----------------------------
+
+  useEffect(() => {
+    checkScreeningReadiness();
+
+    const readinessInterval = setInterval(
+      () => {
+        checkScreeningReadiness();
+      },
+      10000
+    );
+
+    return () => {
+      clearInterval(readinessInterval);
+    };
+  }, []);
 
   // -----------------------------
   // Fetch jobs
@@ -139,6 +268,8 @@ export default function CVUpload() {
   // -----------------------------
 
   useEffect(() => {
+    let cancelled = false;
+
     const restoreActiveScreening = async () => {
       try {
         const response = await fetch(
@@ -154,16 +285,41 @@ export default function CVUpload() {
         );
 
         /*
-         * No active screening.
-         *
-         * This is the normal state when the user first
-         * opens the CV Upload page.
+         * If the page was cleared/unmounted while the request
+         * was still in progress, do not restore the old state.
          */
-        if (!data.screening) {
+        if (cancelled) {
           return;
         }
 
-        const screening = data.screening;
+        const screening =
+          data?.screening ||
+          data?.data ||
+          (data?._id ? data : null);
+
+        if (!screening) {
+          return;
+        }
+
+        /*
+         * A failed screening is kept in the database so that
+         * its result can be displayed. However, when the user
+         * explicitly clicks "Clear All Files", that screening
+         * should not be restored when they navigate away and
+         * come back.
+         */
+        const dismissedScreeningId =
+          localStorage.getItem(
+            DISMISSED_SCREENING_KEY
+          );
+
+        if (
+          dismissedScreeningId &&
+          String(dismissedScreeningId) ===
+            String(screening._id)
+        ) {
+          return;
+        }
 
         console.log(
           "Active screening restored:",
@@ -210,9 +366,15 @@ export default function CVUpload() {
               "Failed to restore uploaded CVs"
             );
 
+          if (cancelled) {
+            return;
+          }
+
           if (
             cvData.cvs &&
-            Array.isArray(cvData.cvs)
+            Array.isArray(
+              cvData.cvs
+            )
           ) {
             const restoredFiles =
               cvData.cvs.map(
@@ -222,8 +384,12 @@ export default function CVUpload() {
                   name: cv.originalName,
                   size: cv.fileSize,
                   progress: 100,
-                  status: "uploaded",
-                  error: null,
+                  status:
+                    cv.status === "failed"
+                      ? "failed"
+                      : "uploaded",
+                  error:
+                    cv.errorMessage || null,
                   cvId: cv._id,
                 })
               );
@@ -239,14 +405,20 @@ export default function CVUpload() {
           }
         }
       } catch (error) {
-        console.error(
-          "Error restoring active screening:",
-          error
-        );
+        if (!cancelled) {
+          console.error(
+            "Error restoring active screening:",
+            error
+          );
+        }
       }
     };
 
     restoreActiveScreening();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // -----------------------------
@@ -258,14 +430,40 @@ export default function CVUpload() {
       return;
     }
 
+    /*
+     * A screening ID must be a MongoDB ObjectId.
+     *
+     * If "readiness" (or another route name) ever gets
+     * assigned to screeningId, calling:
+     *
+     *   /screening/readiness
+     *
+     * will hit the readiness endpoint instead of the
+     * screening-status endpoint and the polling loop will
+     * never receive a screening object.
+     */
+    const isValidScreeningId =
+      /^[a-fA-F0-9]{24}$/.test(String(screeningId));
+
+    if (!isValidScreeningId) {
+      console.error(
+        "Invalid screeningId. Polling stopped:",
+        screeningId
+      );
+      return;
+    }
+
     let intervalId;
 
     const fetchScreeningStatus =
       async () => {
         try {
+          const statusUrl =
+            `${API_BASE_URL}/screening/${screeningId}`;
+
           const response =
             await fetch(
-              `${API_BASE_URL}/screening/${screeningId}`,
+              statusUrl,
               {
                 headers:
                   getAuthHeaders(),
@@ -278,22 +476,57 @@ export default function CVUpload() {
               "Failed to fetch screening status"
             );
 
+          /*
+           * The backend may return:
+           *   { success: true, screening: {...} }
+           *   { success: true, data: {...} }
+           * or the screening object directly.
+           *
+           * The previous code always used data.screening,
+           * which caused:
+           *   Cannot read properties of undefined (reading 'status')
+           * when this endpoint returned the screening directly.
+           */
+          const screening =
+            data?.screening ||
+            data?.data ||
+            (data?._id ? data : null);
+
+          if (!screening || !screening.status) {
+            console.error(
+              "Invalid screening status response:",
+              {
+                screeningId,
+                url: statusUrl,
+                response: data,
+              }
+            );
+
+            /*
+             * Do not keep polling a response that is not a
+             * screening-status object. This prevents a
+             * runaway browser-console loop.
+             */
+            clearInterval(intervalId);
+            return;
+          }
+
           setScreeningStatus(
-            data.screening
+            screening
           );
 
           console.log(
             "Screening status:",
-            data.screening
+            screening
           );
 
           // Stop polling when finished
           if (
-            data.screening.status ===
+            screening.status ===
               "complete" ||
-            data.screening.status ===
+            screening.status ===
               "failed" ||
-            data.screening.status ===
+            screening.status ===
               "cancelled"
           ) {
             clearInterval(
@@ -355,6 +588,11 @@ export default function CVUpload() {
   const addFiles = (
     selectedFiles
   ) => {
+    // A new upload starts a fresh CV workflow.
+    localStorage.removeItem(
+      DISMISSED_SCREENING_KEY
+    );
+
     const incomingFiles =
       Array.from(
         selectedFiles
@@ -512,6 +750,18 @@ export default function CVUpload() {
       return;
     }
 
+    /*
+     * Remember that this terminal screening was explicitly
+     * dismissed by the user. The backend record remains intact,
+     * but /screening/active must not restore it on the next visit.
+     */
+    if (screeningId) {
+      localStorage.setItem(
+        DISMISSED_SCREENING_KEY,
+        String(screeningId)
+      );
+    }
+
     setFiles([]);
     setScreeningId(null);
     setScreeningStatus(null);
@@ -664,6 +914,9 @@ export default function CVUpload() {
           "CV upload successful:"
         );
         console.log(data);
+
+        // Refresh service readiness after upload
+        checkScreeningReadiness();
       } catch (error) {
         console.error(
           "CV upload error:",
@@ -739,6 +992,26 @@ export default function CVUpload() {
           true
         );
 
+        /*
+         * Refresh readiness immediately before
+         * starting the screening.
+         *
+         * This protects against a worker/AI service
+         * stopping after the periodic readiness check.
+         */
+        const readiness =
+          await checkScreeningReadiness();
+
+        if (
+          !readiness ||
+          !readiness.ready
+        ) {
+          throw new Error(
+            screeningReadiness.message ||
+              "Screening services are not ready. Please try again."
+          );
+        }
+
         const response =
           await fetch(
             `${API_BASE_URL}/screening/start`,
@@ -797,6 +1070,12 @@ export default function CVUpload() {
           error
         );
 
+        /*
+         * Refresh readiness so the UI immediately
+         * reflects the current service state.
+         */
+        await checkScreeningReadiness();
+
         alert(
           error.message
         );
@@ -820,12 +1099,10 @@ export default function CVUpload() {
         return;
       }
 
-      const uploadedCVIds =
+      const restartCVIds =
         files
           .filter(
             (file) =>
-              file.status ===
-                "uploaded" &&
               file.cvId
           )
           .map(
@@ -834,7 +1111,7 @@ export default function CVUpload() {
           );
 
       if (
-        uploadedCVIds.length ===
+        restartCVIds.length ===
         0
       ) {
         alert(
@@ -847,6 +1124,22 @@ export default function CVUpload() {
         setIsStartingScreening(
           true
         );
+
+        /*
+         * Check readiness before restarting.
+         */
+        const readiness =
+          await checkScreeningReadiness();
+
+        if (
+          !readiness ||
+          !readiness.ready
+        ) {
+          throw new Error(
+            screeningReadiness.message ||
+              "Screening services are not ready. Please try again."
+          );
+        }
 
         const response =
           await fetch(
@@ -862,7 +1155,7 @@ export default function CVUpload() {
                 jobId:
                   selectedJob,
                 cvIds:
-                  uploadedCVIds,
+                  restartCVIds,
               }),
             }
           );
@@ -907,6 +1200,8 @@ export default function CVUpload() {
           "Restart screening error:",
           error
         );
+
+        await checkScreeningReadiness();
 
         alert(
           error.message
@@ -1061,6 +1356,13 @@ export default function CVUpload() {
     screeningStatus?.status ===
     "processing";
 
+  const screeningErrors =
+    Array.isArray(
+      screeningStatus?.errors
+    )
+      ? screeningStatus.errors
+      : [];
+
   // -----------------------------
   // Button state
   // -----------------------------
@@ -1080,13 +1382,24 @@ export default function CVUpload() {
     !isCancellingScreening &&
     !screeningId;
 
+  /*
+   * Start Screening is only available when:
+   *
+   * 1. At least one CV is uploaded
+   * 2. No CV is waiting to be uploaded
+   * 3. No active screening exists
+   * 4. The system readiness check has completed
+   * 5. All required services are ready
+   */
   const canStartScreening =
     uploadedCount > 0 &&
     readyCount === 0 &&
     !isUploading &&
     !isStartingScreening &&
     !isCancellingScreening &&
-    !screeningId;
+    !screeningId &&
+    screeningReadiness.checked &&
+    screeningReadiness.ready;
 
   // -----------------------------
   // Format file size
@@ -1235,6 +1548,96 @@ export default function CVUpload() {
         )}
 
       </div>
+
+      {/* -------------------------------- */}
+      {/* Screening Service Status */}
+      {/* -------------------------------- */}
+
+      {screeningReadiness.checked &&
+        !screeningReadiness.ready && (
+          <div className="mx-auto mb-6 w-[calc(100%-140px)] rounded-[14px] border border-red-200 bg-red-50 px-6 py-4">
+
+            <div className="flex items-start gap-3">
+
+              <AlertCircle
+                size={20}
+                className="mt-0.5 shrink-0 text-red-600"
+              />
+
+              <div className="flex-1">
+
+                <p className="text-sm font-semibold text-red-800">
+                  Screening services are not ready
+                </p>
+
+                <p className="mt-1 text-xs text-red-700">
+                  {
+                    screeningReadiness.message
+                  }
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-3 text-xs">
+
+                  <span
+                    className={
+                      screeningReadiness.services.database
+                        ? "font-medium text-green-700"
+                        : "font-medium text-red-700"
+                    }
+                  >
+                    Database{" "}
+                    {screeningReadiness.services.database
+                      ? "✓"
+                      : "✕"}
+                  </span>
+
+                  <span
+                    className={
+                      screeningReadiness.services.redis
+                        ? "font-medium text-green-700"
+                        : "font-medium text-red-700"
+                    }
+                  >
+                    Redis{" "}
+                    {screeningReadiness.services.redis
+                      ? "✓"
+                      : "✕"}
+                  </span>
+
+                  <span
+                    className={
+                      screeningReadiness.services.aiService
+                        ? "font-medium text-green-700"
+                        : "font-medium text-red-700"
+                    }
+                  >
+                    AI Service{" "}
+                    {screeningReadiness.services.aiService
+                      ? "✓"
+                      : "✕"}
+                  </span>
+
+                  <span
+                    className={
+                      screeningReadiness.services.worker
+                        ? "font-medium text-green-700"
+                        : "font-medium text-red-700"
+                    }
+                  >
+                    CV Worker{" "}
+                    {screeningReadiness.services.worker
+                      ? "✓"
+                      : "✕"}
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        )}
 
       {/* -------------------------------- */}
       {/* Upload Area */}
@@ -1526,9 +1929,11 @@ export default function CVUpload() {
 
                     <p className="mt-1 text-xs text-slate-500">
                       {screeningComplete
-                        ? "All CVs have been processed."
+                        ? failedScreeningCVs > 0
+                          ? "Screening completed with some CV processing errors."
+                          : "All CVs have been processed successfully."
                         : screeningFailed
-                          ? "The screening process failed."
+                          ? "The screening failed because none of the CVs could be processed."
                           : screeningCancelled
                             ? "The screening was cancelled."
                             : "CVs are being analyzed by the AI screening system."}
@@ -1592,6 +1997,60 @@ export default function CVUpload() {
                   </span>
 
                 </div>
+
+                {/* Processing Errors */}
+
+                {screeningErrors.length > 0 && (
+                  <div className="mt-5 rounded-lg border border-red-200 bg-red-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle
+                        size={18}
+                        className="mt-0.5 shrink-0 text-red-600"
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-red-800">
+                          CV Processing Errors
+                        </p>
+
+                        <p className="mt-1 text-xs text-red-700">
+                          {screeningErrors.length === 1
+                            ? "1 CV could not be processed."
+                            : `${screeningErrors.length} CVs could not be processed.`}
+                        </p>
+
+                        <div className="mt-3 space-y-2">
+                          {screeningErrors.map(
+                            (errorItem, index) => {
+                              const failedFile =
+                                files.find(
+                                  (file) =>
+                                    file.cvId ===
+                                    errorItem.cvId
+                                );
+
+                              return (
+                                <div
+                                  key={`${errorItem.cvId || "error"}-${index}`}
+                                  className="rounded-md border border-red-200 bg-white px-3 py-2"
+                                >
+                                  <p className="text-xs font-medium text-slate-800">
+                                    {failedFile?.name ||
+                                      `CV ${index + 1}`}
+                                  </p>
+
+                                  <p className="mt-1 text-xs leading-5 text-red-700">
+                                    {errorItem.message}
+                                  </p>
+                                </div>
+                              );
+                            }
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Stop Screening */}
 
@@ -1720,7 +2179,8 @@ export default function CVUpload() {
                       restartScreening
                     }
                     disabled={
-                      isStartingScreening
+                      isStartingScreening ||
+                      !screeningReadiness.ready
                     }
                     className="flex h-[38px] items-center gap-2 rounded-lg bg-[#19295F] px-[18px] text-[13px] font-medium text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:bg-slate-400"
                   >
