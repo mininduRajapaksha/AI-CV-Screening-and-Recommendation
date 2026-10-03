@@ -1,116 +1,207 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Bold, Italic, Underline, List, Link as LinkIcon, X } from 'lucide-react'
-import Button from '../../components/ui/Button'
-import Input from '../../components/ui/Input'
-import { useJobs } from '../../context/JobContext'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bold, Italic, Underline, List, Link as LinkIcon, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import ChipInput from '../../components/forms/ChipInput';
+import { jobsApi } from '../../api/jobs.api';
 
 export default function CreateJob() {
-  const navigate = useNavigate()
-  const { addJob } = useJobs()
+  const navigate = useNavigate();
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    title: '', department: '', location: '', employmentType: 'Full-time',
-    experienceLevel: 'Mid-Senior Level', salary: '', description: '', skills: []
-  })
-  const [skillInput, setSkillInput] = useState('')
+    title: '',
+    department: '',
+    location: '',
+    employmentType: 'Full-time',
+    experienceLevel: 'Mid-Senior Level',
+    salaryRange: '',
+    description: '',
+    skills: [],
+  });
 
-  const addSkill = (e) => {
-    if (e.key === 'Enter' && skillInput.trim()) {
-      e.preventDefault()
-      setForm({ ...form, skills: [...form.skills, skillInput.trim()] })
-      setSkillInput('')
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const save = async (asDraft = false) => {
+    if (!form.title.trim() || !form.description.trim()) {
+      toast.error('Title and Description are required');
+      return;
     }
-  }
-  const removeSkill = (i) => setForm({ ...form, skills: form.skills.filter((_, idx) => idx !== i) })
-
-  const handleSave = (status) => {
-    if (!form.title) return alert('Job title is required')
-    addJob({ ...form, status })
-    navigate('/jobs')
-  }
+    setSaving(true);
+    try {
+      await jobsApi.create({
+        ...form,
+        status: asDraft ? 'Draft' : 'Active',
+      });
+      toast.success(asDraft ? 'Job saved as draft' : 'Job posted successfully');
+      navigate('/jobs');
+    } catch (err) {
+      console.error('Failed to create job:', err);
+      toast.error(
+        err.response?.data?.message || err.message || 'Failed to create job'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <>
-      <div className="flex items-start justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-navy">Create New Job Posting</h2>
-          <p className="text-sm text-gray-500 mt-1">Draft a new job role to publish to your careers portal and boards</p>
+          <h1 className="text-2xl font-bold text-slate-900">Create New Job Posting</h1>
+          <p className="text-sm text-slate-500">
+            Draft a new job role to publish to your careers portal and boards
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => navigate('/jobs')}>Cancel</Button>
-          <Button variant="secondary" onClick={() => handleSave('Draft')}>Save as Draft</Button>
-          <Button variant="coral" onClick={() => handleSave('Active')}>Post Job</Button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            disabled={saving}
+            className="btn-secondary"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => save(true)}
+            disabled={saving}
+            className="btn-secondary"
+          >
+            {saving ? 'Saving...' : 'Save as Draft'}
+          </button>
+          <button
+            onClick={() => save(false)}
+            disabled={saving}
+            className="btn-primary"
+          >
+            {saving ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="animate-spin" size={16} /> Posting...
+              </span>
+            ) : (
+              'Post Job'
+            )}
+          </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="grid grid-cols-2 gap-6">
-          <Input label="Job Title" required placeholder="e.g. Senior Frontend Engineer" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
-
+      <div className="card p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-navy mb-1.5">Job Description <span className="text-coral">*</span></label>
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="flex items-center gap-3 px-3 py-1.5 border-b border-gray-100 bg-gray-50">
-                <Bold className="w-3.5 h-3.5 text-gray-500 cursor-pointer" />
-                <Italic className="w-3.5 h-3.5 text-gray-500 cursor-pointer" />
-                <Underline className="w-3.5 h-3.5 text-gray-500 cursor-pointer" />
-                <List className="w-3.5 h-3.5 text-gray-500 cursor-pointer" />
-                <LinkIcon className="w-3.5 h-3.5 text-gray-500 cursor-pointer" />
-              </div>
-              <textarea rows="6" placeholder="Enter full job specifications, roles, and candidate requirements..."
-                value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
-                className="w-full px-3 py-2 text-sm text-navy placeholder-gray-400 focus:outline-none resize-none" />
-            </div>
+            <label className="label">Job Title *</label>
+            <input
+              value={form.title}
+              onChange={(e) => set('title', e.target.value)}
+              placeholder="e.g. Senior Frontend Engineer"
+              className="input-field"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-navy mb-1.5">Department <span className="text-coral">*</span></label>
-              <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })}
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-navy">
+              <label className="label">Department *</label>
+              <select
+                value={form.department}
+                onChange={(e) => set('department', e.target.value)}
+                className="input-field"
+              >
                 <option value="">Select department</option>
-                <option>Design</option><option>Engineering</option><option>Human Resources</option>
-                <option>Quality Assurance</option><option>Infrastructure</option><option>Product</option>
+                <option>Design</option>
+                <option>Engineering</option>
+                <option>Human Resources</option>
+                <option>Infrastructure</option>
+                <option>Product</option>
+                <option>Quality Assurance</option>
               </select>
             </div>
-            <Input label="Location" required placeholder="e.g. San Francisco, CA (Hybrid)" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-navy mb-1.5">Required Skills <span className="text-coral">*</span></label>
-            <div className="border border-gray-200 rounded-lg p-2 min-h-[52px] flex flex-wrap gap-2 items-center">
-              {form.skills.map((s, i) => (
-                <span key={i} className="inline-flex items-center gap-1 bg-blue-50 text-navy text-xs font-medium px-2.5 py-1 rounded-full">
-                  {s} <button onClick={() => removeSkill(i)}><X className="w-3 h-3" /></button>
-                </span>
-              ))}
-              <input value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={addSkill}
-                placeholder="Type a skill and press Enter..."
-                className="flex-1 min-w-[150px] text-sm focus:outline-none py-1" />
+            <div>
+              <label className="label">Location *</label>
+              <input
+                value={form.location}
+                onChange={(e) => set('location', e.target.value)}
+                placeholder="e.g. San Francisco, CA (Hybrid)"
+                className="input-field"
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-navy mb-1.5">Employment Type <span className="text-coral">*</span></label>
-              <select value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })}
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-navy">
-                <option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option>
+              <label className="label">Employment Type *</label>
+              <select
+                value={form.employmentType}
+                onChange={(e) => set('employmentType', e.target.value)}
+                className="input-field"
+              >
+                <option>Full-time</option>
+                <option>Part-time</option>
+                <option>Contract</option>
+                <option>Internship</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-navy mb-1.5">Experience Level <span className="text-coral">*</span></label>
-              <select value={form.experienceLevel} onChange={e => setForm({ ...form, experienceLevel: e.target.value })}
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-navy">
-                <option>Junior Level</option><option>Mid Level</option><option>Mid-Senior Level</option>
-                <option>Senior Level</option><option>Director Level</option>
+              <label className="label">Experience Level *</label>
+              <select
+                value={form.experienceLevel}
+                onChange={(e) => set('experienceLevel', e.target.value)}
+                className="input-field"
+              >
+                <option>Junior Level</option>
+                <option>Mid Level</option>
+                <option>Mid-Senior Level</option>
+                <option>Senior Level</option>
+                <option>Lead / Principal</option>
               </select>
             </div>
           </div>
 
-          <Input label="Salary Range" required placeholder="e.g. $120,000 - $150,000 / year" value={form.salary} onChange={e => setForm({ ...form, salary: e.target.value })} />
+          <div>
+            <label className="label">Salary Range</label>
+            <input
+              value={form.salaryRange}
+              onChange={(e) => set('salaryRange', e.target.value)}
+              placeholder="e.g. $80,000 - $110,000 / year"
+              className="input-field"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="label">Job Description *</label>
+            <div className="border border-slate-300 rounded-lg overflow-hidden">
+              <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-200 bg-slate-50 text-slate-500">
+                <button type="button" className="p-1 hover:bg-slate-200 rounded">
+                  <Bold size={16} />
+                </button>
+                <button type="button" className="p-1 hover:bg-slate-200 rounded">
+                  <Italic size={16} />
+                </button>
+                <button type="button" className="p-1 hover:bg-slate-200 rounded">
+                  <Underline size={16} />
+                </button>
+                <button type="button" className="p-1 hover:bg-slate-200 rounded">
+                  <List size={16} />
+                </button>
+                <button type="button" className="p-1 hover:bg-slate-200 rounded">
+                  <LinkIcon size={16} />
+                </button>
+              </div>
+              <textarea
+                value={form.description}
+                onChange={(e) => set('description', e.target.value)}
+                rows={10}
+                placeholder="Enter full job specifications, roles, and candidate requirements"
+                className="w-full p-4 outline-none resize-none text-sm"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="label">Required Skills *</label>
+            <ChipInput value={form.skills} onChange={(v) => set('skills', v)} />
+          </div>
         </div>
       </div>
-    </>
-  )
+    </div>
+  );
 }
