@@ -1,18 +1,28 @@
 const { Parser } = require('json2csv');
 const PDFDocument = require('pdfkit');
+const Candidate = require('../models/Candidate');
+const Job = require('../models/Job');
 
-// Get Ranked Candidates
+// Get Ranked Candidates from Database
 exports.getRankedCandidates = async (req, res) => {
   try {
-    const mockRankedData = [
-      { rank: '#01', name: 'Harshani', match: 98, rec: 'Highly Recommended', justification: 'Strong match with required skills.' },
-      { rank: '#02', name: 'Kasun', match: 82, rec: 'Highly Recommended', justification: 'Good technical fit.' },
-      { rank: '#03', name: 'Pabudi', match: 78, rec: 'Recommended', justification: 'Missing some minor skills.' },
-      { rank: '#04', name: 'Diluni', match: 75, rec: 'Recommended', justification: 'Average match.' },
-      { rank: '#05', name: 'Kaushi', match: 63, rec: 'Not Recommended', justification: 'Lacks required experience.' },
-      { rank: '#06', name: 'Ravindu', match: 52, rec: 'Not Recommended', justification: 'Poor skill match.' },
-    ];
-    res.status(200).json(mockRankedData);
+    const { jobId } = req.params;
+
+    // Fetch candidates for the specific job and sort by matchPercent descending
+    const candidates = await Candidate.find({ jobId: jobId }).sort({ matchPercent: -1 });
+
+    // Map through candidates to format the data and assign a Rank
+    const rankedData = candidates.map((c, index) => ({
+      candidateId: c._id,
+      rank: index + 1, // Dynamically assigning rank based on sorted array
+      name: c.name,
+      appliedRole: c.appliedRole || 'N/A',
+      matchPercent: c.matchPercent,
+      recommendation: c.recommendation,
+      justification: c.justification || ''
+    }));
+
+    res.status(200).json(rankedData);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching ranking data', error: error.message });
   }

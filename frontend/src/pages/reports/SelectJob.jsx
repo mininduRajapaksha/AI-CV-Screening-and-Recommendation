@@ -55,7 +55,7 @@ export default function SelectJob() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search vacancy postings"
-            className="input-field pl-10"
+            className="input-field !pl-10" 
           />
         </div>
       </div>
