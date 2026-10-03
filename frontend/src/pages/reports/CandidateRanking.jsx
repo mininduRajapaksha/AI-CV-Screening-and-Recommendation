@@ -23,7 +23,6 @@ export default function CandidateRanking() {
   const [showPdf, setShowPdf] = useState(false);
   const [query, setQuery] = useState('');
   
-  // Added 'Pending' to default filters so unprocessed CVs from the database will show up automatically
   const [filters, setFilters] = useState({
     recommendation: ['Highly Recommended', 'Recommended', 'Not Recommended', 'Pending'],
     range: [0, 100], 
@@ -31,14 +30,12 @@ export default function CandidateRanking() {
     skills: [],
   });
 
-  // Fetch REAL data from the backend APIs (No Dummy Data)
   useEffect(() => {
     const fetchReportData = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // 1. Fetch Job details from Real Database
         try {
           const jobRes = await axios.get(`http://localhost:5000/api/jobs/${currentJobId}`);
           const jobData = jobRes.data?.job || jobRes.data?.data || jobRes.data;
@@ -52,7 +49,6 @@ export default function CandidateRanking() {
           setJob({ title: 'Unknown Job Role', skills: [] });
         }
 
-        // 2. Fetch Ranked Candidates from Real Database
         const candidatesRes = await axios.get(`http://localhost:5000/api/reports/${currentJobId}/ranking`);
         const candidateData = candidatesRes.data?.data || candidatesRes.data;
         
@@ -70,15 +66,14 @@ export default function CandidateRanking() {
     if (currentJobId) fetchReportData();
   }, [currentJobId]);
 
-  // Dynamic Filtering Logic based strictly on Real Data
+  // Real data filtering based on reportController.js outputs
   const filtered = useMemo(() => candidates.filter((c) => {
-    const nameMatch = !query || (c.name && c.name.toLowerCase().includes(query.toLowerCase()));
+    const cName = c.name || "";
+    const nameMatch = !query || (cName.toLowerCase().includes(query.toLowerCase()));
     
-    // If AI hasn't processed them yet, treat them as 'Pending'
     const cRec = c.recommendation || 'Pending';
     const recMatch = filters.recommendation.includes(cRec);
     
-    // If AI hasn't processed them yet, Match % is 0
     const cMatch = c.matchPercent || 0;
     const rangeMatch = cMatch >= filters.range[0] && cMatch <= filters.range[1];
     
@@ -88,10 +83,9 @@ export default function CandidateRanking() {
   const stats = useMemo(() => {
     if (candidates.length === 0) return { total: 0, highly: 0, avg: 0, shortlisted: 0 };
     
-    // Calculate average Match % ONLY for candidates the AI has already processed
     const processedCandidates = candidates.filter(c => (c.matchPercent || 0) > 0);
     const avgMatch = processedCandidates.length > 0 
-       ? Math.round(processedCandidates.reduce((a, c) => a + c.matchPercent, 0) / processedCandidates.length)
+       ? Math.round(processedCandidates.reduce((a, c) => a + (c.matchPercent || 0), 0) / processedCandidates.length)
        : 0;
 
     return {
@@ -165,16 +159,20 @@ export default function CandidateRanking() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.map((c, index) => {
+              const cName = c.name || 'Extracting Name...';
+              const cRec = c.recommendation || 'Pending';
+              const cMatch = c.matchPercent || 0;
               const isPending = !c.recommendation || c.recommendation === 'Pending';
+
               return (
                 <tr key={c.candidateId || c._id || index} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-semibold text-slate-500">
                      {isPending ? '-' : `#${String(c.rank || index + 1).padStart(2, '0')}`}
                   </td>
-                  <td className="px-6 py-4 font-medium text-slate-900">{c.name || 'Extracting Name...'}</td>
-                  <td className="px-6 py-4 text-slate-600">{c.appliedRole || job.title}</td>
-                  <td className="px-6 py-4"><ProgressRing value={c.matchPercent || 0} /></td>
-                  <td className="px-6 py-4"><StatusPill value={c.recommendation || 'Pending'} /></td>
+                  <td className="px-6 py-4 font-medium text-slate-900">{cName}</td>
+                  <td className="px-6 py-4 text-slate-600">{c.appliedRole || job.title || 'Unknown Role'}</td>
+                  <td className="px-6 py-4"><ProgressRing value={cMatch} /></td>
+                  <td className="px-6 py-4"><StatusPill value={cRec} /></td>
                   <td className="px-6 py-4 text-right">
                     <Link to={`/candidates/${c.candidateId || c._id}`} className="btn-secondary text-xs px-3 py-1.5 inline-block">View Profile</Link>
                   </td>
