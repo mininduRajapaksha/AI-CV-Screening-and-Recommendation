@@ -12,6 +12,46 @@ load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 
 
+# ---------------------------------------------------------
+# Format candidate name
+# ---------------------------------------------------------
+
+def format_candidate_name(name):
+    """
+    Convert a candidate name into title case.
+
+    Examples:
+        MININDU RAJAPAKSHA
+        -> Minindu Rajapaksha
+
+        minindu rajapaksha
+        -> Minindu Rajapaksha
+
+        Minindu RAJAPAKSHA
+        -> Minindu Rajapaksha
+
+        MININDU K. RAJAPAKSHA
+        -> Minindu K. Rajapaksha
+    """
+
+    if not name:
+        return ""
+
+    # Remove leading/trailing spaces
+    name = name.strip()
+
+    # Replace multiple spaces with a single space
+    name = " ".join(name.split())
+
+    # Convert each word to title case
+    name = " ".join(
+        word.capitalize()
+        for word in name.split()
+    )
+
+    return name
+
+
 def process_cv_with_ai(file_path):
     """
     AI Agent 01 - Information Extractor
@@ -36,8 +76,9 @@ def process_cv_with_ai(file_path):
     """
 
 
+    # ---------------------------------------------------------
     # Extract text from PDF
-
+    # ---------------------------------------------------------
 
     raw_text = extract_text_from_pdf(file_path)
 
@@ -47,8 +88,9 @@ def process_cv_with_ai(file_path):
         }
 
 
+    # ---------------------------------------------------------
     # Check Gemini API key
-
+    # ---------------------------------------------------------
 
     if not api_key or api_key == "your_api_key_here":
         return {
@@ -56,8 +98,9 @@ def process_cv_with_ai(file_path):
         }
 
 
+    # ---------------------------------------------------------
     # AI Prompt
-
+    # ---------------------------------------------------------
 
     prompt = f"""
 You are an expert HR AI Assistant.
@@ -92,9 +135,9 @@ CV Text:
 
     try:
 
-    
+        # -----------------------------------------------------
         # Gemini API request
-    
+        # -----------------------------------------------------
 
         headers = {
             "Content-Type": "application/json",
@@ -212,9 +255,10 @@ CV Text:
 
         gemini_data = gemini_response.json()
 
-    
+
+        # -----------------------------------------------------
         # Check Gemini API errors
-    
+        # -----------------------------------------------------
 
         if "error" in gemini_data:
             return {
@@ -224,9 +268,10 @@ CV Text:
                 )
             }
 
-    
+
+        # -----------------------------------------------------
         # Check candidates
-    
+        # -----------------------------------------------------
 
         if "candidates" not in gemini_data:
             return {
@@ -238,9 +283,10 @@ CV Text:
                 "error": "Gemini returned an empty candidates list."
             }
 
-    
+
+        # -----------------------------------------------------
         # Extract structured JSON response
-    
+        # -----------------------------------------------------
 
         raw_ai_text = (
             gemini_data["candidates"][0]
@@ -253,13 +299,48 @@ CV Text:
 
         extracted_data = json.loads(raw_ai_text)
 
+
+        # -----------------------------------------------------
+        # Normalize candidate name
+        # -----------------------------------------------------
+
+        if (
+            "personalInfo" in extracted_data
+            and isinstance(
+                extracted_data["personalInfo"],
+                dict
+            )
+        ):
+            original_name = extracted_data[
+                "personalInfo"
+            ].get("name", "")
+
+            formatted_name = format_candidate_name(
+                original_name
+            )
+
+            extracted_data[
+                "personalInfo"
+            ]["name"] = formatted_name
+
+            print(
+                f"Candidate name formatted: "
+                f"'{original_name}' -> '{formatted_name}'"
+            )
+
+
+        # -----------------------------------------------------
+        # Extraction successful
+        # -----------------------------------------------------
+
         print("AI Extraction successful.")
 
         return extracted_data
 
 
+    # ---------------------------------------------------------
     # JSON parsing error
-
+    # ---------------------------------------------------------
 
     except json.JSONDecodeError as error:
         return {
@@ -267,8 +348,9 @@ CV Text:
         }
 
 
+    # ---------------------------------------------------------
     # Request / other errors
-
+    # ---------------------------------------------------------
 
     except requests.RequestException as error:
         return {
@@ -281,7 +363,9 @@ CV Text:
         }
 
 
+# ---------------------------------------------------------
 # Local testing
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
 

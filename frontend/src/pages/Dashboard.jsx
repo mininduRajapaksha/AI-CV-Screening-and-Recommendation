@@ -30,47 +30,33 @@ const getStatusStyles = (rec) => {
   return { color: "#ef4444", bg: "bg-red-500", initialBg: "bg-slate-800" };
 };
 
-// Mock data for charts (can be updated later via API)
-const jobStatsData = [
-  { name: 'Jan', Applications: 40, Hires: 20 },
-  { name: 'Feb', Applications: 65, Hires: 30 },
-  { name: 'Mar', Applications: 50, Hires: 15 },
-  { name: 'Apr', Applications: 30, Hires: 10 },
-  { name: 'May', Applications: 60, Hires: 20 },
-  { name: 'Jun', Applications: 45, Hires: 15 },
-  { name: 'Jul', Applications: 55, Hires: 35 },
-  { name: 'Aug', Applications: 35, Hires: 20 },
-];
-
-const skillData = [
-  { name: 'React / Frontend', value: 38, color: '#1e3a8a' },
-  { name: 'Backend / Node', value: 27, color: '#4f46e5' },
-  { name: 'Design / UI', value: 18, color: '#3b82f6' },
-  { name: 'Data / Analytics', value: 11, color: '#0ea5e9' },
-  { name: 'DevOps / Infra', value: 6, color: '#38bdf8' },
-];
-
 export default function Dashboard() {
   const navigate = useNavigate();
   
-  // States to store both statistics and the recent candidates list fetched from the backend
+  // States to store statistics, charts data, and the recent candidates list fetched from the backend
   const [stats, setStats] = useState({ totalJobs: 0, totalCandidates: 0, shortlistedCount: 0, processingCount: 0 });
   const [recentCandidates, setRecentCandidates] = useState([]);
+  
+  // New States for dynamic chart data
+  const [jobStatsData, setJobStatsData] = useState([]);
+  const [skillData, setSkillData] = useState([]);
 
   // Fetch dashboard data on component mount
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // 1. Fetching Top Statistics
+        // 1. Fetching Top Statistics and Chart Data
         const statsRes = await axios.get('http://localhost:5000/api/dashboard/stats');
         if(statsRes.data.success) {
             setStats(statsRes.data.data);
+            // Assigning dynamic data to charts (fallback to empty array if backend is not ready)
+            setJobStatsData(statsRes.data.data.jobStats || []);
+            setSkillData(statsRes.data.data.skillsDistribution || []);
         }
         
-        // 2. Fetching Recent Candidates (Job ID 1)
-        const candidatesRes = await axios.get('http://localhost:5000/api/candidates/job/1');
+        // 2. Fetching Recent Candidates
+        const candidatesRes = await axios.get('http://localhost:5000/api/candidates');
         if(candidatesRes.data.success) {
-            // Get the latest candidates and show only the top 3 on the dashboard
             const sorted = candidatesRes.data.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             setRecentCandidates(sorted.slice(0, 3));
         }
@@ -117,7 +103,6 @@ export default function Dashboard() {
             <div className="p-2 bg-indigo-50 rounded-md"><Star size={16} className="text-indigo-600" /></div>
           </div>
           <div className="mt-4">
-            {/* Dynamically displaying the shortlisted count fetched from the backend API */}
             <h2 className="text-3xl font-bold">{stats.shortlistedCount || 0}</h2>
             <p className="text-xs text-slate-400 mt-1">AI Recommended</p>
           </div>
@@ -142,21 +127,28 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* CHARTS SECTION - Now using dynamic state data */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        
+        {/* Bar Chart - Job Statistics */}
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
           <h3 className="text-sm font-bold mb-1">Job Statistics</h3>
           <p className="text-xs text-slate-500 mb-4">Applications vs. Hires — last 6 months</p>
           <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={jobStatsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barGap={0}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="Applications" fill="#1e293b" radius={[2, 2, 0, 0]} barSize={12} />
-                <Bar dataKey="Hires" fill="#6366f1" radius={[2, 2, 0, 0]} barSize={12} />
-              </BarChart>
-            </ResponsiveContainer>
+            {jobStatsData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={jobStatsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barGap={0}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                  <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Bar dataKey="Applications" fill="#1e293b" radius={[2, 2, 0, 0]} barSize={12} />
+                  <Bar dataKey="Hires" fill="#6366f1" radius={[2, 2, 0, 0]} barSize={12} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400 text-sm">Waiting for chart data...</div>
+            )}
           </div>
           <div className="flex gap-4 mt-4 text-xs text-slate-500">
             <div className="flex items-center gap-1"><div className="w-3 h-3 bg-slate-800 rounded-sm"></div> Applications</div>
@@ -164,6 +156,7 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Pie Chart - Candidate Skills */}
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex flex-col">
           <div>
             <h3 className="text-sm font-bold mb-1">Candidate Skills</h3>
@@ -171,22 +164,26 @@ export default function Dashboard() {
           </div>
           <div className="flex-1 flex items-center justify-between">
             <div className="h-48 w-1/2">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={skillData} innerRadius={55} outerRadius={80} paddingAngle={2} dataKey="value" stroke="none">
-                    {skillData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                </PieChart>
-              </ResponsiveContainer>
+              {skillData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={skillData} innerRadius={55} outerRadius={80} paddingAngle={2} dataKey="value" stroke="none">
+                      {skillData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color || '#3b82f6'} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-400 text-sm">No skill data</div>
+              )}
             </div>
             <div className="w-1/2 flex flex-col gap-3">
               {skillData.map((skill, index) => (
                 <div key={index} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: skill.color }}></div>
+                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: skill.color || '#3b82f6' }}></div>
                     <span className="text-slate-700 font-medium">{skill.name}</span>
                   </div>
                   <span className="text-slate-500">{skill.value}%</span>
@@ -226,7 +223,7 @@ export default function Dashboard() {
                         </div>
                         <span className="font-medium">{cName}</span>
                       </td>
-                      <td className="p-4 text-slate-600">Software Engineer</td>
+                      <td className="p-4 text-slate-600">{candidate.jobTitle || "N/A"}</td>
                       <td className="p-4 text-center">
                         <CircularProgress value={candidate.matchPercentage} color={styles.color} />
                       </td>
@@ -236,7 +233,6 @@ export default function Dashboard() {
                         </span>
                       </td>
                       <td className="p-4 text-center pr-6">
-                        {/* UPDATE: Passing the specific candidate data through React Router state */}
                         <button 
                           onClick={() => navigate('/candidates', { state: { candidateData: candidate } })} 
                           className="px-4 py-1.5 border border-indigo-500 text-indigo-600 hover:bg-indigo-50 bg-white rounded-full text-xs font-medium transition-colors cursor-pointer"

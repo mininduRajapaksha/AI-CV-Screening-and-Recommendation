@@ -1,40 +1,97 @@
-// Import the Candidate model to interact with the MongoDB database
+// Import required models to interact with the MongoDB database
 const Candidate = require('../models/Candidate');
+const Job = require('../models/Job'); 
 
-// GET: Fetch candidates by specific Job ID
-exports.getCandidatesByJob = async (req, res) => {
+// GET: Fetch all candidates across all jobs and dynamically attach their real Job Titles
+exports.getAllCandidates = async (req, res) => {
     try {
-        // Find all candidates associated with the given jobId in the database
-        const candidates = await Candidate.find({ jobId: req.params.jobId });
+        // Retrieve every candidate document from MongoDB
+        const candidates = await Candidate.find();
         
-        res.status(200).json({
-            success: true,
-            data: candidates
-        });
+        // Map through each candidate to find their associated Job Title using the jobId
+        const candidatesWithJobTitles = await Promise.all(candidates.map(async (candidate) => {
+            let jobTitle = "N/A";
+            try {
+                // Look up the actual job document using the candidate's jobId as a foreign key
+                const job = await Job.findById(candidate.jobId);
+                if (job && job.title) {
+                    jobTitle = job.title; // Extract the title from the Job model
+                }
+            } catch (err) {
+                // Silently ignore casting errors if jobId is not a valid ObjectId yet
+            }
+            
+            return {
+                ...candidate._doc, // Convert Mongoose document to a plain JavaScript object
+                jobTitle: jobTitle // Attach the dynamically fetched job title
+            };
+        }));
+
+        res.status(200).json({ success: true, data: candidatesWithJobTitles });
     } catch (error) {
-        // Return a 500 server error if the database query fails
         res.status(500).json({ success: false, error: error.message });
     }
 };
 
-// GET: Fetch Specific Candidate Details by ID
+// GET: Fetch candidates filtered by a specific Job ID
+exports.getCandidatesByJob = async (req, res) => {
+    try {
+        // Find all candidates associated with the given jobId
+        const candidates = await Candidate.find({ jobId: req.params.jobId });
+        
+        // Map through each candidate to attach the Job Title for the filtered list
+        const candidatesWithJobTitles = await Promise.all(candidates.map(async (candidate) => {
+            let jobTitle = "N/A";
+            try {
+                const job = await Job.findById(candidate.jobId);
+                if (job && job.title) {
+                    jobTitle = job.title;
+                }
+            } catch (err) {}
+            
+            return {
+                ...candidate._doc,
+                jobTitle: jobTitle
+            };
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: candidatesWithJobTitles
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// GET: Fetch full profile details of a specific candidate by their MongoDB ID
 exports.getCandidateDetails = async (req, res) => {
     try {
         // Find a specific candidate by their unique MongoDB document ID (_id)
         const candidate = await Candidate.findById(req.params.id);
         
-        // If no candidate is found with the provided ID, return a 404 error
         if (!candidate) {
             return res.status(404).json({ success: false, error: 'Candidate not found' });
         }
 
-        // Return the full candidate profile details fetched from the database
+        let jobTitle = "N/A";
+        try {
+            // Fetch the real job title from the Job collection
+            const job = await Job.findById(candidate.jobId);
+            if (job && job.title) {
+                jobTitle = job.title;
+            }
+        } catch (err) {}
+
+        // Return the full candidate profile alongside the dynamic job title
         res.status(200).json({
             success: true,
-            data: candidate
+            data: {
+                ...candidate._doc,
+                jobTitle: jobTitle
+            }
         });
     } catch (error) {
-        // Return a 500 server error if the database query fails
         res.status(500).json({ success: false, error: error.message });
     }
 };
@@ -44,7 +101,7 @@ exports.saveCandidate = async (req, res) => {
     try {
         // Map the incoming JSON data from the Python AI script to the Candidate model structure
         const newCandidate = new Candidate({
-            jobId: req.body.jobId || "1", // Defaulting to "1" for current testing purposes
+            jobId: req.body.jobId || "1", // Foreign key linking to the Job collection
             personalInfo: {
                 name: req.body["Candidate Name"] || req.body.personalInfo?.name || "Unknown Candidate",
                 email: req.body["Contact Info"]?.email || req.body.personalInfo?.email || "N/A",
@@ -55,7 +112,6 @@ exports.saveCandidate = async (req, res) => {
             justification: req.body.justification || "Awaiting AI Justification",
             matchedSkills: req.body.matchedSkills || [],
             missingSkills: req.body.missingSkills || [],
-            // Handle variations in key casing from the AI output
             experience: req.body.Experience || req.body.experience || [],
             education: req.body.Education || req.body.education || []
         });
@@ -70,7 +126,6 @@ exports.saveCandidate = async (req, res) => {
             data: savedCandidate
         });
     } catch (error) {
-        // Return a 500 server error if saving to the database fails
         res.status(500).json({ success: false, error: error.message });
     }
 };

@@ -1,54 +1,238 @@
 require("dotenv").config()
 
 const { Worker } = require("bullmq")
+const IORedis = require("ioredis")
+
 const connectDB = require("../config/db")
 
 const CV = require("../models/CV")
 const Screening = require("../models/Screening")
-const Job = require("../models/Job")
+const Job = require("../models/job")
 const Candidate = require("../models/Candidate")
 
 const { processCV } = require("../services/aiService")
 
+
+/*
+|--------------------------------------------------------------------------
+| Failure Message Helper
+|--------------------------------------------------------------------------
+|
+| Converts technical AI/service errors into messages that are safe
+| and understandable for the frontend.
+|
+|--------------------------------------------------------------------------
+*/
+
 const getFailureMessage = (error) => {
-    const status = error.response?.status
-    const rawMessage = String(
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        ""
-    ).toLowerCase()
+
+    const status =
+        error.response?.status
+
+    const rawMessage =
+        String(
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            error.message ||
+            ""
+        ).toLowerCase()
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rate Limit
+    |--------------------------------------------------------------------------
+    */
 
     if (status === 429) {
-        return "AI service rate limit reached. Please try again later."
+
+        return (
+            "AI service rate limit reached. " +
+            "Please try again later."
+        )
     }
 
-    if (rawMessage.includes("quota") || rawMessage.includes("token limit")) {
-        return "AI service usage limit reached. Please try again later."
+
+    /*
+    |--------------------------------------------------------------------------
+    | Gemini Quota / Token Limit
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        rawMessage.includes("quota") ||
+        rawMessage.includes("token limit")
+    ) {
+
+        return (
+            "AI service usage limit reached. " +
+            "Please try again later."
+        )
     }
 
-    if (rawMessage.includes("busy") || rawMessage.includes("overloaded")) {
-        return "AI service is busy. Please try again later."
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI Service Busy
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        rawMessage.includes("busy") ||
+        rawMessage.includes("overloaded")
+    ) {
+
+        return (
+            "AI service is busy. " +
+            "Please try again later."
+        )
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI Service Server Error
+    |--------------------------------------------------------------------------
+    */
 
     if (status >= 500) {
-        return "AI service is temporarily unavailable. Please try again later."
+
+        return (
+            "AI service is temporarily unavailable. " +
+            "Please try again later."
+        )
     }
 
-    if (["ECONNREFUSED", "ETIMEDOUT", "ECONNABORTED"].includes(error.code)) {
-        return "AI service is unavailable. Please try again later."
+
+    /*
+    |--------------------------------------------------------------------------
+    | Connection Errors
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        [
+            "ECONNREFUSED",
+            "ETIMEDOUT",
+            "ECONNABORTED"
+        ].includes(error.code)
+    ) {
+
+        return (
+            "AI service is unavailable. " +
+            "Please try again later."
+        )
     }
 
-    return error.message || "An unexpected error occurred while screening this CV."
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Error
+    |--------------------------------------------------------------------------
+    */
+
+    return (
+        error.message ||
+        "An unexpected error occurred while screening this CV."
+    )
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| Worker Heartbeat
+|--------------------------------------------------------------------------
+|
+| The worker writes a heartbeat to Redis every 5 seconds.
+|
+| The heartbeat key expires after 15 seconds.
+|
+| The backend uses this to determine whether the worker is running.
+|
+|--------------------------------------------------------------------------
+*/
+
+const WORKER_HEARTBEAT_KEY =
+    "cv-worker:heartbeat"
+
+
+const updateWorkerHeartbeat = async (
+    connection
+) => {
+
+    try {
+
+        await connection.set(
+            WORKER_HEARTBEAT_KEY,
+            Date.now().toString(),
+            "EX",
+            15
+        )
+
+    } catch (error) {
+
+        console.error(
+            "Worker heartbeat error:",
+            error.message
+        )
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Start Worker
+|--------------------------------------------------------------------------
+*/
 
 const startWorker = async () => {
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Connect MongoDB
+    |--------------------------------------------------------------------------
+    */
+
     await connectDB()
 
-    console.log("MongoDB connection ready for worker")
+    console.log(
+        "MongoDB connection ready for worker"
+    )
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Redis Configuration
+    |--------------------------------------------------------------------------
+    */
+
+    const redisConnection = {
+
+        host:
+            process.env.REDIS_HOST,
+
+        port:
+            Number(
+                process.env.REDIS_PORT
+            ),
+
+        username:
+            process.env.REDIS_USERNAME,
+
+        password:
+            process.env.REDIS_PASSWORD
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Create BullMQ Worker
+    |--------------------------------------------------------------------------
+    */
 
     const worker = new Worker(
+
         "cv-processing",
 
         async (job) => {
@@ -59,64 +243,129 @@ const startWorker = async () => {
                 jobId
             } = job.data
 
-            console.log(`Processing CV: ${cvId}`)
-            console.log(`Job ID: ${jobId}`)
 
-            // Find CV
-            const cv = await CV.findById(cvId)
+            console.log(
+                `Processing CV: ${cvId}`
+            )
+
+            console.log(
+                `Job ID: ${jobId}`
+            )
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Find CV
+            |--------------------------------------------------------------------------
+            */
+
+            const cv =
+                await CV.findById(
+                    cvId
+                )
+
 
             if (!cv) {
+
                 throw new Error(
                     "CV record not found"
                 )
             }
 
-            
-            // Find Screening
+
+            /*
+            |--------------------------------------------------------------------------
+            | Find Screening
+            |--------------------------------------------------------------------------
+            */
+
             const screening =
                 await Screening.findById(
                     screeningId
                 )
 
+
             if (!screening) {
+
                 throw new Error(
                     "Screening record not found"
                 )
             }
 
-            if (screening.status === "cancelled") {
-                cv.status = "cancelled"
-                cv.errorMessage = null
+
+            /*
+            |--------------------------------------------------------------------------
+            | Check Cancellation
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                screening.status ===
+                "cancelled"
+            ) {
+
+                cv.status =
+                    "cancelled"
+
+                cv.errorMessage =
+                    null
+
                 await cv.save()
-                console.log(`Skipping cancelled screening: ${screeningId}`)
+
+
+                console.log(
+                    `Skipping cancelled screening: ${screeningId}`
+                )
+
                 return
             }
 
-            
-            // Find Job
+
+            /*
+            |--------------------------------------------------------------------------
+            | Find Job Posting
+            |--------------------------------------------------------------------------
+            */
+
             const jobPosting =
-                await Job.findById(jobId)
+                await Job.findById(
+                    jobId
+                )
+
 
             if (!jobPosting) {
+
                 throw new Error(
                     "Job posting not found"
                 )
             }
 
+
             console.log(
                 `Job found: ${jobPosting.title}`
             )
 
-            
-            // Mark CV as processing
-            cv.status = "processing"
 
-            cv.errorMessage = null
+            /*
+            |--------------------------------------------------------------------------
+            | Mark CV As Processing
+            |--------------------------------------------------------------------------
+            */
+
+            cv.status =
+                "processing"
+
+            cv.errorMessage =
+                null
 
             await cv.save()
 
-            
-            // Prepare Job Description
+
+            /*
+            |--------------------------------------------------------------------------
+            | Prepare Job Description
+            |--------------------------------------------------------------------------
+            */
 
             const jobDescription = `
 Job Title: ${jobPosting.title}
@@ -138,25 +387,51 @@ ${
 }
 `
 
+
             console.log(
                 "Job description prepared."
             )
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Send CV To AI Service
+            |--------------------------------------------------------------------------
+            */
 
             console.log(
                 "Sending CV to AI service..."
             )
 
-            
-            // AI Processing
+
+            /*
+            |--------------------------------------------------------------------------
+            | Complete AI Pipeline
+            |--------------------------------------------------------------------------
+            |
+            | Agent 01
+            | Information Extractor
+            |        ↓
+            | Agent 02
+            | HR Evaluator
+            |        ↓
+            | Agent 03
+            | Decision Maker
+            |
+            |--------------------------------------------------------------------------
+            */
+
             const aiResponse =
                 await processCV(
                     cv.filePath,
                     jobDescription
                 )
 
+
             console.log(
                 "AI Response:"
             )
+
 
             console.log(
                 JSON.stringify(
@@ -166,17 +441,30 @@ ${
                 )
             )
 
-            
-            // Check AI response
+
+            /*
+            |--------------------------------------------------------------------------
+            | Validate AI Response
+            |--------------------------------------------------------------------------
+            */
+
             if (
                 !aiResponse ||
                 aiResponse.success === false
             ) {
+
                 throw new Error(
                     aiResponse?.error ||
                     "AI processing failed"
                 )
             }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Extract Agent Results
+            |--------------------------------------------------------------------------
+            */
 
             const candidateData =
                 aiResponse.candidate
@@ -184,38 +472,148 @@ ${
             const evaluation =
                 aiResponse.evaluation
 
+            const decision =
+                aiResponse.decision
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Validate Agent 01 Result
+            |--------------------------------------------------------------------------
+            */
+
             if (!candidateData) {
+
                 throw new Error(
                     "Candidate data missing from AI response"
                 )
             }
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Validate Agent 02 Result
+            |--------------------------------------------------------------------------
+            */
+
             if (!evaluation) {
+
                 throw new Error(
                     "Evaluation data missing from AI response"
                 )
             }
 
-            // The AI request may still finish after a user cancels. Do not
-            // persist its result if the screening was cancelled in the meantime.
-            const currentScreening = await Screening.findById(screeningId)
 
-            if (!currentScreening || currentScreening.status === "cancelled") {
-                cv.status = "cancelled"
-                cv.errorMessage = null
+            /*
+            |--------------------------------------------------------------------------
+            | Validate Agent 03 Result
+            |--------------------------------------------------------------------------
+            */
+
+            if (!decision) {
+
+                throw new Error(
+                    "Decision data missing from Agent 03 response"
+                )
+            }
+
+
+            if (!decision.aiRecommendation) {
+
+                throw new Error(
+                    "AI recommendation missing from Agent 03 response"
+                )
+            }
+
+
+            if (!decision.justification) {
+
+                throw new Error(
+                    "Decision justification missing from Agent 03 response"
+                )
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Log Agent 03 Result
+            |--------------------------------------------------------------------------
+            */
+
+            console.log(
+                "Agent 03 Decision:"
+            )
+
+            console.log(
+                JSON.stringify(
+                    decision,
+                    null,
+                    2
+                )
+            )
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Check Cancellation Again
+            |--------------------------------------------------------------------------
+            |
+            | The user may cancel the screening while the AI request
+            | is still processing.
+            |
+            |--------------------------------------------------------------------------
+            */
+
+            const currentScreening =
+                await Screening.findById(
+                    screeningId
+                )
+
+
+            if (
+                !currentScreening ||
+                currentScreening.status ===
+                "cancelled"
+            ) {
+
+                cv.status =
+                    "cancelled"
+
+                cv.errorMessage =
+                    null
+
                 await cv.save()
-                console.log(`Discarding result for cancelled screening: ${screeningId}`)
+
+
+                console.log(
+                    `Discarding result for cancelled screening: ${screeningId}`
+                )
+
                 return
             }
 
-            
-            // Save Candidate
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save Candidate
+            |--------------------------------------------------------------------------
+            */
+
             const candidate =
                 await Candidate.create({
 
-                    jobId: jobId,
+                    jobId:
+                        jobId,
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Candidate Personal Information
+                    |--------------------------------------------------------------------------
+                    */
 
                     personalInfo: {
+
                         name:
                             candidateData
                                 .personalInfo
@@ -235,19 +633,18 @@ ${
                             ""
                     },
 
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Agent 02 Fields
+                    |--------------------------------------------------------------------------
+                    */
+
                     matchPercentage:
                         evaluation
                             .matchPercentage ||
                         0,
 
-                    // Agent 03 fields
-                    aiRecommendation:
-                        "Pending",
-
-                    justification:
-                        "Awaiting Agent 03 evaluation",
-
-                    // Agent 02 fields
                     matchedSkills:
                         evaluation
                             .matchedSkills ||
@@ -258,10 +655,44 @@ ${
                             .missingSkills ||
                         [],
 
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Agent 03 Fields
+                    |--------------------------------------------------------------------------
+                    |
+                    | Final recommendation and justification
+                    | generated by the Decision Maker.
+                    |
+                    |--------------------------------------------------------------------------
+                    */
+
+                    aiRecommendation:
+                        decision
+                            .aiRecommendation,
+
+                    justification:
+                        decision
+                            .justification,
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Candidate Experience
+                    |--------------------------------------------------------------------------
+                    */
+
                     experience:
                         candidateData
                             .experience ||
                         [],
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Candidate Education
+                    |--------------------------------------------------------------------------
+                    */
 
                     education:
                         candidateData
@@ -269,76 +700,201 @@ ${
                         []
                 })
 
+
             console.log(
                 `Candidate saved successfully: ${candidate._id}`
             )
 
-            const screeningToUpdate = await Screening.findById(screeningId)
 
-            if (!screeningToUpdate || screeningToUpdate.status === "cancelled") {
-                cv.status = "cancelled"
-                cv.errorMessage = null
+            /*
+            |--------------------------------------------------------------------------
+            | Check Cancellation Before Updating Screening
+            |--------------------------------------------------------------------------
+            */
+
+            const screeningToUpdate =
+                await Screening.findById(
+                    screeningId
+                )
+
+
+            if (
+                !screeningToUpdate ||
+                screeningToUpdate.status ===
+                "cancelled"
+            ) {
+
+                cv.status =
+                    "cancelled"
+
+                cv.errorMessage =
+                    null
+
                 await cv.save()
-                console.log(`Discarding result for cancelled screening: ${screeningId}`)
+
+
+                console.log(
+                    `Discarding result for cancelled screening: ${screeningId}`
+                )
+
                 return
             }
 
-            
-            // Mark CV complete
-            cv.status = "complete"
 
-            cv.errorMessage = null
+            /*
+            |--------------------------------------------------------------------------
+            | Mark CV Complete
+            |--------------------------------------------------------------------------
+            */
+
+            cv.status =
+                "complete"
+
+            cv.errorMessage =
+                null
 
             await cv.save()
 
-            
-            // Update Screening
-            screeningToUpdate.completedCVs += 1
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update Screening Progress
+            |--------------------------------------------------------------------------
+            */
+
+            screeningToUpdate.completedCVs +=
+                1
+
 
             const processedCVs =
                 screeningToUpdate.completedCVs +
                 screeningToUpdate.failedCVs
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Check If Screening Finished
+            |--------------------------------------------------------------------------
+            */
+
             if (
                 processedCVs >=
                 screeningToUpdate.totalCVs
             ) {
+
+                /*
+                |--------------------------------------------------------------
+                | If at least one CV completed successfully,
+                | the screening is considered complete.
+                |
+                | If every CV failed, the screening is failed.
+                |--------------------------------------------------------------
+                */
+
                 screeningToUpdate.status =
-                    "complete"
+                    screeningToUpdate.completedCVs > 0
+                        ? "complete"
+                        : "failed"
             }
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save Screening
+            |--------------------------------------------------------------------------
+            */
+
             await screeningToUpdate.save()
+
 
             console.log(
                 `Screening progress: ${processedCVs}/${screeningToUpdate.totalCVs}`
             )
+
 
             console.log(
                 `CV ${cvId} processed successfully.`
             )
         },
 
+
         {
-            connection: {
-                host:
-                    process.env.REDIS_HOST,
-
-                port:
-                    Number(
-                        process.env.REDIS_PORT
-                    ),
-
-                username:
-                    process.env.REDIS_USERNAME,
-
-                password:
-                    process.env.REDIS_PASSWORD
-            }
+            connection:
+                redisConnection
         }
     )
 
-    
-    // Job completed
+
+    /*
+    |--------------------------------------------------------------------------
+    | Separate Redis Connection For Worker Heartbeat
+    |--------------------------------------------------------------------------
+    |
+    | Do NOT use worker.client here.
+    |
+    | BullMQ does not expose the connection that way in this setup.
+    |
+    |--------------------------------------------------------------------------
+    */
+
+    const heartbeatConnection =
+        new IORedis({
+
+            host:
+                process.env.REDIS_HOST,
+
+            port:
+                Number(
+                    process.env.REDIS_PORT
+                ),
+
+            username:
+                process.env.REDIS_USERNAME,
+
+            password:
+                process.env.REDIS_PASSWORD,
+
+            maxRetriesPerRequest:
+                null
+        })
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Start Heartbeat
+    |--------------------------------------------------------------------------
+    */
+
+    const heartbeatInterval =
+        setInterval(
+            () => {
+
+                updateWorkerHeartbeat(
+                    heartbeatConnection
+                )
+
+            },
+            5000
+        )
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Create Initial Heartbeat
+    |--------------------------------------------------------------------------
+    */
+
+    await updateWorkerHeartbeat(
+        heartbeatConnection
+    )
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Job Completed
+    |--------------------------------------------------------------------------
+    */
+
     worker.on(
         "completed",
         (job) => {
@@ -349,8 +905,13 @@ ${
         }
     )
 
-    
-    // Job failed
+
+    /*
+    |--------------------------------------------------------------------------
+    | Job Failed
+    |--------------------------------------------------------------------------
+    */
+
     worker.on(
         "failed",
         async (job, error) => {
@@ -360,9 +921,11 @@ ${
                 error.message
             )
 
+
             if (!job) {
                 return
             }
+
 
             try {
 
@@ -371,45 +934,84 @@ ${
                     screeningId
                 } = job.data
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | Convert Technical Error To User-Friendly Message
+                |--------------------------------------------------------------------------
+                */
+
                 const failureMessage =
-                    getFailureMessage(error)
+                    getFailureMessage(
+                        error
+                    )
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Find Screening
+                |--------------------------------------------------------------------------
+                */
 
                 const screeningForFailure =
-                    await Screening.findById(screeningId)
+                    await Screening.findById(
+                        screeningId
+                    )
 
-                if (!screeningForFailure || screeningForFailure.status === "cancelled") {
+
+                if (
+                    !screeningForFailure ||
+                    screeningForFailure.status ===
+                    "cancelled"
+                ) {
+
                     return
                 }
 
-                
-                // Mark CV as failed
+
+                /*
+                |--------------------------------------------------------------------------
+                | Mark CV Failed
+                |--------------------------------------------------------------------------
+                */
+
                 const cv =
                     await CV.findById(
                         cvId
                     )
 
+
                 if (cv) {
 
-                    cv.status = "failed"
+                    cv.status =
+                        "failed"
 
                     cv.errorMessage =
                         failureMessage
 
                     await cv.save()
 
+
                     console.log(
                         `CV ${cvId} marked as failed.`
                     )
                 }
 
-                
-                // Update Screening
+
+                /*
+                |--------------------------------------------------------------------------
+                | Find Screening Again
+                |--------------------------------------------------------------------------
+                */
+
                 const screening =
                     await Screening.findById(
                         screeningId
                     )
 
+
                 if (!screening) {
+
                     console.error(
                         `Screening ${screeningId} not found.`
                     )
@@ -417,23 +1019,72 @@ ${
                     return
                 }
 
-                if (screening.status === "cancelled") {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Check Cancellation
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    screening.status ===
+                    "cancelled"
+                ) {
+
                     return
                 }
 
-                screening.failedCVs += 1
-                screening.errors = screening.errors || []
-                screening.errors.push({
+
+                /*
+                |--------------------------------------------------------------------------
+                | Increment Failed CV Count
+                |--------------------------------------------------------------------------
+                */
+
+                screening.failedCVs +=
+                    1
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Store Processing Error
+                |--------------------------------------------------------------------------
+                |
+                | Your Screening model uses "processingErrors".
+                |
+                |--------------------------------------------------------------------------
+                */
+
+                screening.processingErrors =
+                    screening.processingErrors || []
+
+
+                screening.processingErrors.push({
+
                     cvId,
-                    message: failureMessage
+
+                    message:
+                        failureMessage
                 })
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Calculate Progress
+                |--------------------------------------------------------------------------
+                */
 
                 const processedCVs =
                     screening.completedCVs +
                     screening.failedCVs
 
-                
-                // Check if all CVs finished
+
+                /*
+                |--------------------------------------------------------------------------
+                | Check If Screening Finished
+                |--------------------------------------------------------------------------
+                */
+
                 if (
                     processedCVs >=
                     screening.totalCVs
@@ -445,10 +1096,23 @@ ${
                             : "failed"
                 }
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | Save Screening
+                |--------------------------------------------------------------------------
+                */
+
                 await screening.save()
+
 
                 console.log(
                     `Screening progress: ${processedCVs}/${screening.totalCVs}`
+                )
+
+
+                console.log(
+                    `Screening status: ${screening.status}`
                 )
 
             } catch (updateError) {
@@ -461,9 +1125,167 @@ ${
         }
     )
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Worker Error
+    |--------------------------------------------------------------------------
+    */
+
+    worker.on(
+        "error",
+        (error) => {
+
+            console.error(
+                "CV worker error:",
+                error.message
+            )
+        }
+    )
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Worker Ready
+    |--------------------------------------------------------------------------
+    */
+
+    worker.on(
+        "ready",
+        async () => {
+
+            console.log(
+                "CV processing worker is ready."
+            )
+
+
+            await updateWorkerHeartbeat(
+                heartbeatConnection
+            )
+        }
+    )
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Graceful Shutdown
+    |--------------------------------------------------------------------------
+    */
+
+    const shutdown = async () => {
+
+        console.log(
+            "Shutting down CV processing worker..."
+        )
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Stop Heartbeat
+        |--------------------------------------------------------------------------
+        */
+
+        clearInterval(
+            heartbeatInterval
+        )
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Remove Heartbeat From Redis
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+
+            await heartbeatConnection.del(
+                WORKER_HEARTBEAT_KEY
+            )
+
+        } catch (error) {
+
+            console.error(
+                "Unable to remove worker heartbeat:",
+                error.message
+            )
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Close Heartbeat Redis Connection
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+
+            await heartbeatConnection.quit()
+
+        } catch (error) {
+
+            console.error(
+                "Unable to close heartbeat Redis connection:",
+                error.message
+            )
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Close BullMQ Worker
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+
+            await worker.close()
+
+        } catch (error) {
+
+            console.error(
+                "Unable to close BullMQ worker:",
+                error.message
+            )
+        }
+
+
+        process.exit(0)
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Process Shutdown Events
+    |--------------------------------------------------------------------------
+    */
+
+    process.on(
+        "SIGINT",
+        shutdown
+    )
+
+    process.on(
+        "SIGTERM",
+        shutdown
+    )
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Worker Started
+    |--------------------------------------------------------------------------
+    */
+
     console.log(
         "CV processing worker is running..."
     )
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| Start Worker
+|--------------------------------------------------------------------------
+*/
 
 startWorker()

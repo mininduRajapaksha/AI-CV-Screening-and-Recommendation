@@ -1,18 +1,58 @@
-const express = require("express")
-const { startScreening, getScreeningStatus, getActiveScreening, cancelScreening } = require("../controllers/screeningController")
+const express = require("express");
 
-const { protect } = require("../middleware/authMiddleware");
+const {
+    startScreening,
+    getScreeningStatus,
+    getActiveScreening,
+    cancelScreening,
+    getScreeningReadiness
+} = require("../controllers/screeningController");
 
-const router = express.Router()
+const {
+    protect
+} = require("../middleware/authMiddleware");
 
-//cv screening
-router.post("/start",protect, startScreening)
+const router = express.Router();
 
-router.get("/active", protect, getActiveScreening);
 
-router.post("/:id/cancel", protect, cancelScreening);
+// Start screening
+router.post(
+    "/start",
+    protect,
+    startScreening
+);
 
-//screening progress status
-router.get("/:id",protect, getScreeningStatus)
 
-module.exports = router
+// Active screening
+router.get(
+    "/active",
+    protect,
+    getActiveScreening
+);
+
+
+// Readiness
+router.get(
+    "/readiness",
+    protect,
+    getScreeningReadiness
+);
+
+
+// Cancel screening
+router.post(
+    "/:id/cancel",
+    protect,
+    cancelScreening
+);
+
+
+// Screening status
+router.get(
+    "/:id",
+    protect,
+    getScreeningStatus
+);
+
+
+module.exports = router;
