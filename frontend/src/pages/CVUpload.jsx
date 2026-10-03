@@ -74,6 +74,133 @@ export default function CVUpload() {
   const [screeningStatus, setScreeningStatus] = useState(null);
 
   // -----------------------------
+  // Screening readiness
+  // -----------------------------
+
+  const [screeningReadiness, setScreeningReadiness] = useState({
+    checked: false,
+    ready: false,
+    services: {
+      database: false,
+      redis: false,
+      aiService: false,
+      worker: false,
+    },
+    message: "",
+  });
+
+  // -----------------------------
+  // Check screening readiness
+  // -----------------------------
+
+  const checkScreeningReadiness = async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/screening/readiness`,
+        {
+          headers: {
+            ...getAuthHeaders(),
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok && !data) {
+        throw new Error(
+          "Unable to check screening services."
+        );
+      }
+
+      if (data?.success) {
+        let message = "";
+
+        if (!data.ready) {
+          if (!data.services?.database) {
+            message =
+              "Database service is unavailable.";
+          } else if (!data.services?.redis) {
+            message =
+              "Redis service is unavailable.";
+          } else if (!data.services?.aiService) {
+            message =
+              "AI service is unavailable. Please start the AI service.";
+          } else if (!data.services?.worker) {
+            message =
+              "CV processing worker is not running. Please start the worker.";
+          } else {
+            message =
+              "Screening services are not ready.";
+          }
+        }
+
+        setScreeningReadiness({
+          checked: true,
+          ready: data.ready === true,
+          services: {
+            database:
+              data.services?.database === true,
+            redis:
+              data.services?.redis === true,
+            aiService:
+              data.services?.aiService === true,
+            worker:
+              data.services?.worker === true,
+          },
+          message,
+        });
+
+        return data;
+      }
+
+      throw new Error(
+        data?.message ||
+          "Unable to check screening services."
+      );
+    } catch (error) {
+      console.error(
+        "Screening readiness check failed:",
+        error
+      );
+
+      setScreeningReadiness({
+        checked: true,
+        ready: false,
+        services: {
+          database: false,
+          redis: false,
+          aiService: false,
+          worker: false,
+        },
+        message:
+          error.message ||
+          "Unable to check screening services.",
+      });
+
+      return null;
+    }
+  };
+
+  // -----------------------------
+  // Check readiness on page load
+  // -----------------------------
+
+  useEffect(() => {
+    checkScreeningReadiness();
+
+    const readinessInterval = setInterval(
+      () => {
+        checkScreeningReadiness();
+      },
+      10000
+    );
+
+    return () => {
+      clearInterval(readinessInterval);
+    };
+  }, []);
+
+  // -----------------------------
   // Fetch jobs
   // -----------------------------
 
@@ -212,7 +339,9 @@ export default function CVUpload() {
 
           if (
             cvData.cvs &&
-            Array.isArray(cvData.cvs)
+            Array.isArray(
+              cvData.cvs
+            )
           ) {
             const restoredFiles =
               cvData.cvs.map(
@@ -664,6 +793,9 @@ export default function CVUpload() {
           "CV upload successful:"
         );
         console.log(data);
+
+        // Refresh service readiness after upload
+        checkScreeningReadiness();
       } catch (error) {
         console.error(
           "CV upload error:",
@@ -739,6 +871,26 @@ export default function CVUpload() {
           true
         );
 
+        /*
+         * Refresh readiness immediately before
+         * starting the screening.
+         *
+         * This protects against a worker/AI service
+         * stopping after the periodic readiness check.
+         */
+        const readiness =
+          await checkScreeningReadiness();
+
+        if (
+          !readiness ||
+          !readiness.ready
+        ) {
+          throw new Error(
+            screeningReadiness.message ||
+              "Screening services are not ready. Please try again."
+          );
+        }
+
         const response =
           await fetch(
             `${API_BASE_URL}/screening/start`,
@@ -797,6 +949,12 @@ export default function CVUpload() {
           error
         );
 
+        /*
+         * Refresh readiness so the UI immediately
+         * reflects the current service state.
+         */
+        await checkScreeningReadiness();
+
         alert(
           error.message
         );
@@ -847,6 +1005,22 @@ export default function CVUpload() {
         setIsStartingScreening(
           true
         );
+
+        /*
+         * Check readiness before restarting.
+         */
+        const readiness =
+          await checkScreeningReadiness();
+
+        if (
+          !readiness ||
+          !readiness.ready
+        ) {
+          throw new Error(
+            screeningReadiness.message ||
+              "Screening services are not ready. Please try again."
+          );
+        }
 
         const response =
           await fetch(
@@ -907,6 +1081,8 @@ export default function CVUpload() {
           "Restart screening error:",
           error
         );
+
+        await checkScreeningReadiness();
 
         alert(
           error.message
@@ -1080,13 +1256,24 @@ export default function CVUpload() {
     !isCancellingScreening &&
     !screeningId;
 
+  /*
+   * Start Screening is only available when:
+   *
+   * 1. At least one CV is uploaded
+   * 2. No CV is waiting to be uploaded
+   * 3. No active screening exists
+   * 4. The system readiness check has completed
+   * 5. All required services are ready
+   */
   const canStartScreening =
     uploadedCount > 0 &&
     readyCount === 0 &&
     !isUploading &&
     !isStartingScreening &&
     !isCancellingScreening &&
-    !screeningId;
+    !screeningId &&
+    screeningReadiness.checked &&
+    screeningReadiness.ready;
 
   // -----------------------------
   // Format file size
@@ -1235,6 +1422,96 @@ export default function CVUpload() {
         )}
 
       </div>
+
+      {/* -------------------------------- */}
+      {/* Screening Service Status */}
+      {/* -------------------------------- */}
+
+      {screeningReadiness.checked &&
+        !screeningReadiness.ready && (
+          <div className="mx-auto mb-6 w-[calc(100%-140px)] rounded-[14px] border border-red-200 bg-red-50 px-6 py-4">
+
+            <div className="flex items-start gap-3">
+
+              <AlertCircle
+                size={20}
+                className="mt-0.5 shrink-0 text-red-600"
+              />
+
+              <div className="flex-1">
+
+                <p className="text-sm font-semibold text-red-800">
+                  Screening services are not ready
+                </p>
+
+                <p className="mt-1 text-xs text-red-700">
+                  {
+                    screeningReadiness.message
+                  }
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-3 text-xs">
+
+                  <span
+                    className={
+                      screeningReadiness.services.database
+                        ? "font-medium text-green-700"
+                        : "font-medium text-red-700"
+                    }
+                  >
+                    Database{" "}
+                    {screeningReadiness.services.database
+                      ? "✓"
+                      : "✕"}
+                  </span>
+
+                  <span
+                    className={
+                      screeningReadiness.services.redis
+                        ? "font-medium text-green-700"
+                        : "font-medium text-red-700"
+                    }
+                  >
+                    Redis{" "}
+                    {screeningReadiness.services.redis
+                      ? "✓"
+                      : "✕"}
+                  </span>
+
+                  <span
+                    className={
+                      screeningReadiness.services.aiService
+                        ? "font-medium text-green-700"
+                        : "font-medium text-red-700"
+                    }
+                  >
+                    AI Service{" "}
+                    {screeningReadiness.services.aiService
+                      ? "✓"
+                      : "✕"}
+                  </span>
+
+                  <span
+                    className={
+                      screeningReadiness.services.worker
+                        ? "font-medium text-green-700"
+                        : "font-medium text-red-700"
+                    }
+                  >
+                    CV Worker{" "}
+                    {screeningReadiness.services.worker
+                      ? "✓"
+                      : "✕"}
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        )}
 
       {/* -------------------------------- */}
       {/* Upload Area */}
@@ -1720,7 +1997,8 @@ export default function CVUpload() {
                       restartScreening
                     }
                     disabled={
-                      isStartingScreening
+                      isStartingScreening ||
+                      !screeningReadiness.ready
                     }
                     className="flex h-[38px] items-center gap-2 rounded-lg bg-[#19295F] px-[18px] text-[13px] font-medium text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:bg-slate-400"
                   >
