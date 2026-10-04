@@ -480,8 +480,8 @@ const getScreeningStatus = async (
                 failedCVs:
                     screening.failedCVs,
 
-                errors:
-                    screening.errors || [],
+                processingErrors:
+                    screening.processingErrors || [],
 
                 status:
                     screening.status,
@@ -578,8 +578,8 @@ const getActiveScreening = async (
                 failedCVs:
                     screening.failedCVs,
 
-                errors:
-                    screening.errors || [],
+                processingErrors:
+                    screening.processingErrors || [],
 
                 status:
                     screening.status,

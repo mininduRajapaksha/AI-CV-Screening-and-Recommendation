@@ -1186,15 +1186,8 @@ export default function CVUpload() {
     !isCancellingScreening &&
     !screeningId;
 
-  /*
-   * Start Screening is only available when:
-   *
-   * 1. At least one CV is uploaded
-   * 2. No CV is waiting to be uploaded
-   * 3. No active screening exists
-   * 4. The system readiness check has completed
-   * 5. All required services are ready
-   */
+  /* Start Screening conditions*/
+
   const canStartScreening =
     uploadedCount > 0 &&
     readyCount === 0 &&
@@ -1735,7 +1728,7 @@ export default function CVUpload() {
                       {screeningComplete
                         ? "All CVs have been processed."
                         : screeningFailed
-                          ? "The screening process failed. See the error message below."
+                          ? "The screening process failed."
                           : screeningCancelled
                             ? "The screening was cancelled."
                             : "CVs are being analyzed by the AI screening system."}
