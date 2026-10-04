@@ -2,27 +2,25 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ArrowRight, Loader2 } from 'lucide-react';
 import { jobsApi } from '../../api/jobs.api';
-import mockJobs from '../../mocks/jobs.json';
 import StatusPill from '../../components/ui/StatusPill';
 
 export default function SelectJob() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchJobs = async () => {
       setLoading(true);
+      setError('');
       try {
         const data = await jobsApi.list();
-        if (Array.isArray(data) && data.length > 0) {
-          setJobs(data);
-        } else {
-          setJobs(mockJobs);
-        }
+        setJobs(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Failed to load jobs for reports:', err);
-        setJobs(mockJobs);
+        setError('Unable to load job postings from the server. Check your connection and try again.');
+        setJobs([]);
       } finally {
         setLoading(false);
       }
@@ -67,6 +65,7 @@ export default function SelectJob() {
         </div>
       ) : (
         <>
+          {error && <div role="alert" className="rounded-lg bg-red-50 p-4 text-sm text-red-600">{error}</div>}
           <div>
             <h2 className="text-xs font-semibold text-slate-500 uppercase mb-3">
               Recently Viewed Reports
@@ -96,6 +95,7 @@ export default function SelectJob() {
                   </Link>
                 );
               })}
+              {recent.length === 0 && <p className="col-span-full text-sm text-slate-500">No job postings are available yet.</p>}
             </div>
           </div>
 
@@ -127,6 +127,7 @@ export default function SelectJob() {
                   </div>
                 );
               })}
+              {filtered.length === 0 && query && <p className="col-span-full text-sm text-slate-500">No postings match your search.</p>}
             </div>
           </div>
         </>

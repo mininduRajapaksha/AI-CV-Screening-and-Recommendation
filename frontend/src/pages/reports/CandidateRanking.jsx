@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
 import { Search, Download, FileText, SlidersHorizontal, Users, ThumbsUp, Target, Bookmark, Loader2 } from 'lucide-react';
 import StatCard from '../../components/ui/StatCard';
 import StatusPill from '../../components/ui/StatusPill';
@@ -8,6 +7,8 @@ import ProgressRing from '../../components/ui/ProgressRing';
 import FilterPanel from './FilterPanel';
 import ExportCsvModal from './ExportCsvModal';
 import ExportPdfModal from './ExportPdfModal';
+import { jobsApi } from '../../api/jobs.api';
+import { reportsApi } from '../../api/reports.api';
 
 export default function CandidateRanking() {
   const { id, jobId } = useParams();
@@ -37,8 +38,8 @@ export default function CandidateRanking() {
         setError(null);
         
         try {
-          const jobRes = await axios.get(`http://localhost:5000/api/jobs/${currentJobId}`);
-          const jobData = jobRes.data?.job || jobRes.data?.data || jobRes.data;
+          const jobRes = await jobsApi.get(currentJobId);
+          const jobData = jobRes?.job || jobRes?.data || jobRes;
           if (jobData && jobData.title) {
             setJob(jobData);
           } else {
@@ -49,7 +50,7 @@ export default function CandidateRanking() {
           setJob({ title: 'Unknown Job Role', skills: [] });
         }
 
-        const candidatesRes = await axios.get(`http://localhost:5000/api/reports/${currentJobId}/ranking`);
+        const candidatesRes = await reportsApi.ranking(currentJobId);
         const candidateData = candidatesRes.data?.data || candidatesRes.data;
         
         if (candidateData && Array.isArray(candidateData)) {
@@ -191,8 +192,8 @@ export default function CandidateRanking() {
       </div>
 
       <FilterPanel open={showFilters} onClose={() => setShowFilters(false)} filters={filters} setFilters={setFilters} jobSkills={job.skills || []} />
-      <ExportCsvModal open={showCsv} onClose={() => setShowCsv(false)} jobTitle={job.title} candidates={filtered} />
-      <ExportPdfModal open={showPdf} onClose={() => setShowPdf(false)} jobTitle={job.title} candidates={filtered} />
+      <ExportCsvModal open={showCsv} onClose={() => setShowCsv(false)} jobId={currentJobId} jobTitle={job.title} candidates={filtered} />
+      <ExportPdfModal open={showPdf} onClose={() => setShowPdf(false)} jobId={currentJobId} jobTitle={job.title} candidates={filtered} />
     </div>
   );
 }
