@@ -57,9 +57,12 @@ export default function Candidates() {
   // State to hold the dynamic count of candidates added this week
   const [thisWeekAdded, setThisWeekAdded] = useState(0);
 
-  // Filter dropdown options
+  // Filter dropdown options for AI Recommendations
   const recOptions = ["All Recommended", "Highly Recommended", "Recommended", "Not Recommended"];
-  const uniqueJobs = ["All Jobs", "Software Engineer", "UI/UX Designer", "DevOps Engineer"]; 
+  
+  // Dynamically extract unique job titles from the fetched candidates list for the Job filter dropdown
+  // We exclude empty titles or "N/A" to keep the dropdown clean
+  const uniqueJobs = ["All Jobs", ...new Set(candidatesList.map(c => c.jobTitle).filter(title => title && title !== "N/A"))]; 
 
   // Fetch real candidate data from the backend API when the component mounts
   useEffect(() => {
@@ -115,12 +118,21 @@ export default function Candidates() {
     }
   }, [location.state]);
 
-  // Apply search query and dropdown filters to the raw candidates list
+  // Apply search query, recommendation filter, and the newly added Job Title filter
   const filteredCandidates = candidatesList.filter((candidate) => {
     const cName = candidate.personalInfo?.name || candidate.name || "";
+    
+    // Check if the candidate matches the search text
     const matchesSearch = cName.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Check if the candidate matches the selected AI Recommendation filter
     const matchesRec = filterRec === "All Recommended" || candidate.aiRecommendation === filterRec;
-    return matchesSearch && matchesRec; // Filter logic can be expanded here for Job Titles
+    
+    // Check if the candidate matches the selected Job Title filter
+    const matchesJob = filterJob === "All Jobs" || candidate.jobTitle === filterJob;
+    
+    // Return true only if all filter conditions are met
+    return matchesSearch && matchesRec && matchesJob; 
   });
 
   // Export current filtered table view to a CSV spreadsheet
@@ -157,8 +169,96 @@ export default function Candidates() {
     autoTable(doc, { head: [tableColumn], body: tableRows, startY: 20 });
     doc.save("ai_candidates_report.pdf");
   };
+  
+  // Create a PDF of the selected candidate's UI details
+  const handleDownloadCandidateCV = () => {
+    if (!selectedCandidate) return;
+    const doc = new jsPDF();
+    const c = selectedCandidate;
+    const cName = c.personalInfo?.name || "Unknown Candidate";
 
-  // Real-time statistical calculations for the top metric cards
+    // Header (Name and contact info)
+    doc.setFontSize(22);
+    doc.setTextColor(30, 41, 59);
+    doc.text(cName, 14, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Applied For: ${c.jobTitle || "N/A"}`, 14, 28);
+    doc.text(`Email: ${c.personalInfo?.email || "N/A"}`, 14, 34);
+    doc.text(`Phone: ${c.personalInfo?.phone || "N/A"}`, 14, 40);
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, 45, 196, 45); // Horizontal line
+
+    // AI Evaluation
+    doc.setFontSize(14);
+    doc.setTextColor(30, 41, 59);
+    doc.text("AI Evaluation Summary", 14, 55);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Match Percentage: ${c.matchPercentage}%`, 14, 63);
+    doc.text(`Recommendation: ${c.aiRecommendation}`, 14, 69);
+    
+    // Split justification into lines if it is too long
+    const splitJustification = doc.splitTextToSize(`Justification: ${c.justification || "N/A"}`, 180);
+    doc.text(splitJustification, 14, 76);
+
+    let currentY = 76 + (splitJustification.length * 5) + 5;
+
+    // Skills Table
+    const matched = c.matchedSkills?.length > 0 ? c.matchedSkills.join(", ") : "None";
+    const missing = c.missingSkills?.length > 0 ? c.missingSkills.join(", ") : "None";
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Matched Skills', 'Missing Skills']],
+      body: [[matched, missing]],
+      headStyles: { fillColor: [67, 56, 202] },
+      theme: 'grid'
+    });
+
+    currentY = doc.lastAutoTable.finalY + 15;
+
+    // Experience Table
+    if (c.experience && c.experience.length > 0) {
+      doc.setFontSize(14);
+      doc.setTextColor(30, 41, 59);
+      doc.text("Experience", 14, currentY);
+      
+      const expData = c.experience.map(e => [e.title || "N/A", e.company || "N/A", e.duration || "N/A"]);
+      autoTable(doc, {
+        startY: currentY + 5,
+        head: [['Job Title', 'Company', 'Duration']],
+        body: expData,
+        headStyles: { fillColor: [74, 99, 139] },
+        theme: 'striped'
+      });
+      currentY = doc.lastAutoTable.finalY + 15;
+    }
+
+    // Education Table
+    if (c.education && c.education.length > 0) {
+      doc.setFontSize(14);
+      doc.setTextColor(30, 41, 59);
+      doc.text("Education", 14, currentY);
+      
+      const eduData = c.education.map(e => [e.degree || "N/A", e.institution || "N/A"]);
+      autoTable(doc, {
+        startY: currentY + 5,
+        head: [['Degree', 'Institution']],
+        body: eduData,
+        headStyles: { fillColor: [74, 99, 139] },
+        theme: 'striped'
+      });
+    }
+
+    // Save the PDF using the candidate's name
+    doc.save(`${cName.replace(/\s+/g, '_')}_CV.pdf`);
+  };
+
+  // Real-time statistical calculations for the top metric cards based on the full list
   const totalCandidates = candidatesList.length;
   const highlyRecommendedCount = candidatesList.filter(c => c.aiRecommendation === "Highly Recommended").length;
   const averageMatch = totalCandidates > 0 ? Math.round(candidatesList.reduce((acc, c) => acc + c.matchPercentage, 0) / totalCandidates) : 0;
@@ -213,7 +313,7 @@ export default function Candidates() {
           </div>
           
           <button 
-            onClick={() => alert("CV file download API feature will be linked soon!")} 
+            onClick={handleDownloadCandidateCV} 
             className="flex items-center gap-2 px-5 py-2.5 bg-indigo-900 hover:bg-indigo-800 text-white rounded-lg text-sm font-medium transition-colors shadow-sm cursor-pointer mt-4 md:mt-0"
           >
             <Download size={16} /> Download CV
