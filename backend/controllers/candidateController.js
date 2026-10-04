@@ -5,6 +5,15 @@ const Job = require('../models/Job');
 // GET: Fetch all candidates across all jobs and dynamically attach their real Job Titles
 exports.getAllCandidates = async (req, res) => {
     try {
+        // Calculate the date for 7 days ago to filter recent additions
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        // Count how many candidate documents were created in the last 7 days
+        const thisWeekCount = await Candidate.countDocuments({
+            createdAt: { $gte: sevenDaysAgo }
+        });
+
         // Retrieve every candidate document from MongoDB
         const candidates = await Candidate.find();
         
@@ -27,7 +36,12 @@ exports.getAllCandidates = async (req, res) => {
             };
         }));
 
-        res.status(200).json({ success: true, data: candidatesWithJobTitles });
+        // Return the candidates list along with the dynamically calculated thisWeekCount
+        res.status(200).json({ 
+            success: true, 
+            data: candidatesWithJobTitles,
+            thisWeekCount: thisWeekCount 
+        });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
