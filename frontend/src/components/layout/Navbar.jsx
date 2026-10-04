@@ -12,7 +12,6 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { notificationApi } from '../../services/notificationApi'
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Convert an ISO timestamp to a human-readable relative string */
 function timeAgo(isoDate) {
@@ -66,7 +65,14 @@ export default function Navbar({ title }) {
     }
   }, [])
 
-  // Fetch on mount; refresh whenever the panel opens
+  useEffect(() => {
+    if (user) {
+      fetchNotifications()
+    } else {
+      setNotifications([])
+    }
+  }, [user, fetchNotifications])
+
   useEffect(() => {
     if (showNotifications) fetchNotifications()
   }, [showNotifications, fetchNotifications])
@@ -125,8 +131,11 @@ export default function Navbar({ title }) {
             {/* UNREAD BADGE */}
 
             {unreadCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#172554] px-1 text-[10px] font-bold leading-none text-white">
-                {unreadCount > 99 ? '99+' : unreadCount}
+              <span
+                aria-label={`${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`}
+                className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#172554] text-[9px] font-bold leading-none text-white"
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
 
