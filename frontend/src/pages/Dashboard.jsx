@@ -45,17 +45,35 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // 1. Fetching Top Statistics and Chart Data
-        const statsRes = await axios.get('http://localhost:5000/api/dashboard/stats');
+        const token = localStorage.getItem("cvision_token");
+        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+        // 1. Fetch Real Jobs Data to dynamically calculate Active Jobs
+        let activeJobsCount = 0;
+        try {
+          const jobsRes = await axios.get('http://localhost:5000/api/jobs', config);
+          const jobsData = Array.isArray(jobsRes.data) ? jobsRes.data : (jobsRes.data?.data || []);
+          // Calculate only the jobs that are NOT 'Closed'
+          activeJobsCount = jobsData.filter(job => job.status !== 'Closed').length;
+        } catch (jobErr) {
+          console.error("Error fetching jobs count:", jobErr);
+        }
+
+        // 2. Fetching Top Statistics and Chart Data
+        const statsRes = await axios.get('http://localhost:5000/api/dashboard/stats', config);
         if(statsRes.data.success) {
-            setStats(statsRes.data.data);
-            // Assigning dynamic data to charts (fallback to empty array if backend is not ready)
+            setStats({
+              ...statsRes.data.data,
+              // Use our dynamically calculated active jobs count. Fallback to backend count if needed.
+              totalJobs: activeJobsCount > 0 ? activeJobsCount : (statsRes.data.data.totalJobs || 0)
+            });
+            // Assigning dynamic data to charts
             setJobStatsData(statsRes.data.data.jobStats || []);
             setSkillData(statsRes.data.data.skillsDistribution || []);
         }
         
-        // 2. Fetching Recent Candidates
-        const candidatesRes = await axios.get('http://localhost:5000/api/candidates');
+        // 3. Fetching Recent Candidates
+        const candidatesRes = await axios.get('http://localhost:5000/api/candidates', config);
         if(candidatesRes.data.success) {
             const sorted = candidatesRes.data.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             setRecentCandidates(sorted.slice(0, 3));
