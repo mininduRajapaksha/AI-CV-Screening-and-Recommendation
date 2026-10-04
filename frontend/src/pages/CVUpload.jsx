@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+
 import {
   ChevronDown,
   UploadCloud,
@@ -264,18 +265,158 @@ export default function CVUpload() {
   }, []);
 
   // -----------------------------
+  // Restore active screening
+  // -----------------------------
+
+  useEffect(() => {
+    const restoreActiveScreening = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/screening/active`,
+          {
+            headers: getAuthHeaders(),
+          }
+        );
+
+        const data = await readApiResponse(
+          response,
+          "Failed to restore active screening"
+        );
+
+        /*
+         * If there is no pending/processing screening,
+         * simply continue with the normal upload screen.
+         */
+        if (!data?.screening) {
+          return;
+        }
+
+        const screening = data.screening;
+
+        console.log(
+          "Active screening restored:",
+          screening
+        );
+
+        /*
+         * Restore screening information.
+         *
+         * Setting screeningId is important because
+         * the polling useEffect below depends on it.
+         */
+        setScreeningId(screening._id);
+        setScreeningStatus(screening);
+
+        /*
+         * Restore the job used by this screening.
+         */
+        if (screening.jobId) {
+          setSelectedJob(screening.jobId);
+        }
+
+        /*
+         * Restore uploaded CV records.
+         *
+         * The actual browser File objects cannot be restored
+         * after navigating away, so file is intentionally null.
+         *
+         * The CVs are already stored in the backend and
+         * therefore can continue being processed.
+         */
+        if (
+          screening.cvIds &&
+          screening.cvIds.length > 0
+        ) {
+          const cvIds =
+            screening.cvIds.join(",");
+
+          const cvResponse = await fetch(
+            `${API_BASE_URL}/cvs/by-ids?ids=${encodeURIComponent(
+              cvIds
+            )}`,
+            {
+              headers: getAuthHeaders(),
+            }
+          );
+
+          const cvData =
+            await readApiResponse(
+              cvResponse,
+              "Failed to restore uploaded CVs"
+            );
+
+          if (
+            cvData.cvs &&
+            Array.isArray(cvData.cvs)
+          ) {
+            const restoredFiles =
+              cvData.cvs.map(
+                (cv) => ({
+                  id: cv._id,
+                  file: null,
+                  name: cv.originalName,
+                  size: cv.fileSize,
+                  progress: 100,
+                  status: "uploaded",
+                  error: null,
+                  cvId: cv._id,
+                })
+              );
+
+            setFiles(
+              restoredFiles
+            );
+          }
+        }
+
+        /*
+         * Make sure the UI reflects the current screening state.
+         */
+        if (
+          screening.status === "processing" ||
+          screening.status === "pending"
+        ) {
+          setScreeningMessage({
+            type: "",
+            text: "",
+          });
+        }
+      } catch (error) {
+        console.error(
+          "Error restoring active screening:",
+          error
+        );
+      }
+    };
+
+    restoreActiveScreening();
+  }, []);
+
+  // -----------------------------
   // Screening result message
   // -----------------------------
 
   const getScreeningErrorMessage = (screening) => {
     const errors = screening?.processingErrors;
 
-    if (Array.isArray(errors) && errors.length > 0) {
-      const lastError = errors[errors.length - 1];
+    if (
+      Array.isArray(errors) &&
+      errors.length > 0
+    ) {
+      const lastError =
+        errors[errors.length - 1];
 
       if (lastError?.message) {
         return lastError.message;
       }
+    }
+
+    if (screening?.errorMessage) {
+      return screening.errorMessage;
+    }
+
+    if (screening?.message) {
+      return screening.message;
     }
 
     return "The screening process failed. Please try again.";
@@ -319,17 +460,29 @@ export default function CVUpload() {
             data.screening
           );
 
-          if (data.screening.status === "complete") {
+          if (
+            data.screening.status ===
+            "complete"
+          ) {
             setScreeningMessage({
               type: "success",
               text: "Screening completed successfully.",
             });
-          } else if (data.screening.status === "failed") {
+          } else if (
+            data.screening.status ===
+            "failed"
+          ) {
             setScreeningMessage({
               type: "error",
-              text: getScreeningErrorMessage(data.screening),
+              text:
+                getScreeningErrorMessage(
+                  data.screening
+                ),
             });
-          } else if (data.screening.status === "cancelled") {
+          } else if (
+            data.screening.status ===
+            "cancelled"
+          ) {
             setScreeningMessage({
               type: "cancelled",
               text: "Screening was cancelled.",
@@ -569,6 +722,7 @@ export default function CVUpload() {
     setFiles([]);
     setScreeningId(null);
     setScreeningStatus(null);
+
     setScreeningMessage({
       type: "",
       text: "",
@@ -916,8 +1070,12 @@ export default function CVUpload() {
         files
           .filter(
             (file) =>
-              (file.status === "uploaded" ||
-                file.status === "failed") &&
+              (
+                file.status ===
+                  "uploaded" ||
+                file.status ===
+                  "failed"
+              ) &&
               file.cvId
           )
           .map(
@@ -964,8 +1122,10 @@ export default function CVUpload() {
                 ...getAuthHeaders(),
               },
               body: JSON.stringify({
-                jobId: selectedJob,
-                cvIds: retryCVIds,
+                jobId:
+                  selectedJob,
+                cvIds:
+                  retryCVIds,
               }),
             }
           );
@@ -1008,7 +1168,8 @@ export default function CVUpload() {
 
         setScreeningMessage({
           type: "error",
-          text: error.message ||
+          text:
+            error.message ||
             "Failed to start screening. Please try again.",
         });
 
@@ -1073,6 +1234,7 @@ export default function CVUpload() {
          */
         setScreeningId(null);
         setScreeningStatus(null);
+
         setScreeningMessage({
           type: "cancelled",
           text: "Screening was cancelled.",
@@ -1186,8 +1348,9 @@ export default function CVUpload() {
     !isCancellingScreening &&
     !screeningId;
 
-  /* Start Screening conditions*/
-
+  /*
+   * Start Screening conditions
+   */
   const canStartScreening =
     uploadedCount > 0 &&
     readyCount === 0 &&
@@ -1335,7 +1498,7 @@ export default function CVUpload() {
 
         {selectedJobData && (
           <div className="mt-3 text-xs text-slate-500">
-            Selected:{" "}
+            Selected{" "}
             <span className="font-medium text-slate-700">
               {
                 selectedJobData.title
@@ -1352,6 +1515,7 @@ export default function CVUpload() {
 
       {screeningReadiness.checked &&
         !screeningReadiness.ready && (
+
           <div className="mx-auto mb-6 w-[calc(100%-140px)] rounded-[14px] border border-red-200 bg-red-50 px-6 py-4">
 
             <div className="flex items-start gap-3">
@@ -1505,6 +1669,7 @@ export default function CVUpload() {
       {/* -------------------------------- */}
 
       {files.length > 0 && (
+
         <div className="mx-auto w-[calc(100%-140px)] overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-sm">
 
           {/* File list header */}
@@ -1534,6 +1699,7 @@ export default function CVUpload() {
 
             {files.map(
               (item) => (
+
                 <div
                   key={
                     item.id
@@ -1596,13 +1762,17 @@ export default function CVUpload() {
 
                     {item.status ===
                       "failed" && (
+
                       <div className="mt-1 flex items-center gap-1 text-[11px] text-red-600">
+
                         <AlertCircle
                           size={14}
                         />
+
                         {
                           item.error
                         }
+
                       </div>
                     )}
 
@@ -1704,6 +1874,7 @@ export default function CVUpload() {
                   </button>
 
                 </div>
+
               )
             )}
 
@@ -1715,11 +1886,13 @@ export default function CVUpload() {
 
           {screeningId &&
             screeningStatus && (
+
               <div className="border-t border-slate-200 px-7 py-5">
 
                 <div className="mb-3 flex items-center justify-between">
 
                   <div>
+
                     <h3 className="text-sm font-semibold text-slate-900">
                       AI Screening
                     </h3>
@@ -1733,6 +1906,7 @@ export default function CVUpload() {
                             ? "The screening was cancelled."
                             : "CVs are being analyzed by the AI screening system."}
                     </p>
+
                   </div>
 
                   <span className="text-sm font-semibold text-slate-900">
@@ -1796,6 +1970,7 @@ export default function CVUpload() {
                 {/* Stop Screening */}
 
                 {screeningProcessing && (
+
                   <div className="mt-5 flex justify-end">
 
                     <button
@@ -1843,6 +2018,7 @@ export default function CVUpload() {
           {/* -------------------------------- */}
 
           {screeningMessage.text && (
+
             <div
               className={`mx-7 mb-4 flex items-start gap-3 rounded-lg border px-4 py-3 ${
                 screeningMessage.type === "success"
@@ -1852,17 +2028,32 @@ export default function CVUpload() {
                     : "border-slate-200 bg-slate-50 text-slate-700"
               }`}
             >
-              {screeningMessage.type === "success" ? (
-                <CheckCircle size={18} className="mt-0.5 shrink-0 text-green-600" />
-              ) : screeningMessage.type === "error" ? (
-                <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-600" />
+
+              {screeningMessage.type ===
+              "success" ? (
+                <CheckCircle
+                  size={18}
+                  className="mt-0.5 shrink-0 text-green-600"
+                />
+              ) : screeningMessage.type ===
+                "error" ? (
+                <AlertCircle
+                  size={18}
+                  className="mt-0.5 shrink-0 text-red-600"
+                />
               ) : (
-                <X size={18} className="mt-0.5 shrink-0 text-slate-500" />
+                <X
+                  size={18}
+                  className="mt-0.5 shrink-0 text-slate-500"
+                />
               )}
 
               <p className="text-xs leading-5">
-                {screeningMessage.text}
+                {
+                  screeningMessage.text
+                }
               </p>
+
             </div>
           )}
 
@@ -1912,11 +2103,14 @@ export default function CVUpload() {
 
               {screeningProcessing && (
                 <span className="flex items-center gap-1.5 text-xs font-medium text-blue-600">
+
                   <LoaderCircle
                     size={16}
                     className="animate-spin"
                   />
+
                   Screening...
+
                 </span>
               )}
 
@@ -1924,10 +2118,13 @@ export default function CVUpload() {
 
               {screeningComplete && (
                 <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
+
                   <CheckCircle
                     size={16}
                   />
+
                   Screening Complete
+
                 </span>
               )}
 
@@ -1935,11 +2132,15 @@ export default function CVUpload() {
 
               {screeningFailed && (
                 <>
+
                   <span className="flex items-center gap-1.5 text-xs font-medium text-red-600">
+
                     <AlertCircle
                       size={16}
                     />
+
                     Screening Failed
+
                   </span>
 
                   <button
@@ -1953,6 +2154,7 @@ export default function CVUpload() {
                     }
                     className="flex h-[38px] items-center gap-2 rounded-lg bg-[#19295F] px-[18px] text-[13px] font-medium text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:bg-slate-400"
                   >
+
                     {isStartingScreening ? (
                       <>
                         <LoaderCircle
@@ -1966,7 +2168,9 @@ export default function CVUpload() {
                     ) : (
                       "Try Again"
                     )}
+
                   </button>
+
                 </>
               )}
 
@@ -1974,10 +2178,13 @@ export default function CVUpload() {
 
               {screeningCancelled && (
                 <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+
                   <X
                     size={16}
                   />
+
                   Screening Cancelled
+
                 </span>
               )}
 

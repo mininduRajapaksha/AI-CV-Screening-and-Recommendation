@@ -533,8 +533,7 @@ const getActiveScreening = async (
                 status: {
                     $in: [
                         "pending",
-                        "processing",
-                        "failed"
+                        "processing"
                     ]
                 }
 
