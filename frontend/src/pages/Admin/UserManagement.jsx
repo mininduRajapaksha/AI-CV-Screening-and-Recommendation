@@ -1133,7 +1133,7 @@ function UserManagement() {
           PAGE HEADER
       ========================================== */}
 
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="mb-8">
 
         <div>
 
@@ -1146,29 +1146,6 @@ function UserManagement() {
           </p>
 
         </div>
-
-
-        <button
-          type="button"
-          onClick={
-            fetchUsers
-          }
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50"
-        >
-
-          <RefreshCw
-            size={16}
-            className={
-              loading
-                ? "animate-spin"
-                : ""
-            }
-          />
-
-          Refresh
-
-        </button>
 
       </div>
 
